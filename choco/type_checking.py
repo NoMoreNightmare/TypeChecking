@@ -278,6 +278,7 @@ def check_stmt_or_def(o: LocalEnvironment, r: Type, op: Operation):
         return var_init_rule(o, r, id, e1)
     elif isinstance(op, choco_ast.Assign):
         if isinstance(op.target.op, choco_ast.ExprName):
+            check_expr(o, r, op.target.op)
             id = op.target.op.id.data
             e1 = op.value.op
             return var_assign_stmt_rule(o, r, id, e1)
@@ -421,7 +422,6 @@ def var_init_rule(o: LocalEnvironment, r: Type, id: str, e1: Operation):
 # [VAR-ASSIGN-STMT]
 # O, R |- id = e1
 def var_assign_stmt_rule(o: LocalEnvironment, r: Type, id: str, e1: Operation):
-
     t = o[id]
 
     t1 = check_expr(o, r, e1)
@@ -628,7 +628,6 @@ def list_select_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation)
 # [LIST-ASSIGN-STMT]
 # O, R |- e1[e2] = e3
 def list_assign_stmt_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation, e3: Operation):
-    print(e2)
     list_t1 = check_expr(o, r, e1)
 
     t1 = list_t1.elem_type
