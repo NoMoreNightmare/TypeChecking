@@ -280,10 +280,16 @@ def check_stmt_or_def(o: LocalEnvironment, r: Type, op: Operation):
         if isinstance(op.target.op, choco_ast.ExprName):
             id = op.target.op.id.data
             e1 = op.value.op
+            return var_assign_stmt_rule(o, r, id, e1)
+        elif isinstance(op.target.op, choco_ast.IndexExpr):
+            e1 = op.target.op.value.op
+            e2 = op.target.op.index.op
+            e3 = op.value.op
+            return list_assign_stmt_rule(o, r, e1, e2, e3)
         else:
             raise Exception("???")
 
-        return var_assign_stmt_rule(o, r, id, e1)
+
     elif isinstance(op, choco_ast.Pass):
         return pass_rule(o, r)
     elif isinstance(op, choco_ast.Return):
@@ -351,7 +357,6 @@ def check_expr(o: LocalEnvironment, r: Type, op: Operation) -> Type:
             else:
                 t = arith_rule(o, r, lhs, rhs)
 
-
     elif isinstance(op, choco_ast.ExprName):
         t = var_read_rule(o, r, op.id.data)  # type: ignore
     elif isinstance(op, choco_ast.IfExpr):
@@ -360,7 +365,9 @@ def check_expr(o: LocalEnvironment, r: Type, op: Operation) -> Type:
         e2 = op.or_else.op
         t = cond_rule(o, r, e1, e0, e2)
     elif isinstance(op, choco_ast.IndexExpr):
-        raise Exception("Support for choco_ast.IndexExpr not implemented yet")
+        e1 = op.value.op
+        e2 = op.index.op
+        t = list_select_rule(o, r, e1, e2)
     elif isinstance(op, choco_ast.ListExpr):
         if op.elems.blocks[0].is_empty:
             t = nil_rule(o, r, op)
@@ -621,7 +628,9 @@ def list_select_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation)
 # [LIST-ASSIGN-STMT]
 # O, R |- e1[e2] = e3
 def list_assign_stmt_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation, e3: Operation):
+    print(e2)
     list_t1 = check_expr(o, r, e1)
+
     t1 = list_t1.elem_type
 
     check_type(check_expr(o, r, e2), expected=int_type)
@@ -633,8 +642,8 @@ def list_assign_stmt_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Opera
 
 # [MULTI-ASSIGN-STMT]
 # O,R |- e1 = e2 = ... = en = e0
-# def multi_assign_stmt(o: LocalEnvironment, r: Type, ???):
-#     ???
+def multi_assign_stmt(o: LocalEnvironment, r: Type ):
+    pass
 
 # [INVOKE]
 # O, R |- f(e1, e2, ..., en): T0
