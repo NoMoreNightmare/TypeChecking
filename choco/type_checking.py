@@ -285,7 +285,7 @@ def check_stmt_or_def(o: LocalEnvironment, r: Type, op: Operation):
 
         return var_assign_stmt_rule(o, r, id, e1)
     elif isinstance(op, choco_ast.Pass):
-        raise Exception("Support for choco_ast.Pass not implemented yet")
+        return pass_rule(o, r)
     elif isinstance(op, choco_ast.Return):
         raise Exception("Support for choco_ast.Return not implemented yet")
     elif isinstance(op, choco_ast.If):
@@ -315,6 +315,8 @@ def check_expr(o: LocalEnvironment, r: Type, op: Operation) -> Type:
         e = op.value.op
         if op_name == "-":
             t = negate_rule(o, r, e)
+        elif op_name == "not":
+            t = not_rule(o, r, e)
         else:
             raise Exception(
                 "Support for some choco_ast.UnaryExpr not implemented yet")
@@ -328,6 +330,28 @@ def check_expr(o: LocalEnvironment, r: Type, op: Operation) -> Type:
             t = or_rule(o, r, lhs, rhs)
         elif binary_op == "is":
             t = is_rule(o, r, lhs, rhs)
+        elif binary_op in ["<", ">", "<=", ">=", "==", "!="]:
+            if binary_op in ["==", "!="]:
+                if type(lhs.properties.get('value')) == choco_ast.BoolAttr:
+                    t = bool_compare_rule(o, r, lhs, rhs)
+                elif type(lhs.properties.get('value')) == choco_ast.IntegerAttr:
+                    t = int_compare_rule(o, r, lhs, rhs)
+                elif type(lhs.properties.get('value')) == choco_ast.StringAttr:
+                    t = str_compare_rule(o, r, lhs, rhs)
+            else:
+                t = int_compare_rule(o, r, lhs, rhs)
+        elif binary_op in ["+", "-", "*", "//", "%"]:
+            if binary_op == "+":
+                if type(lhs.properties.get('value')) == choco_ast.IntegerAttr:
+                    t = arith_rule(o, r, lhs, rhs)
+                elif lhs.name == "choco.ast.list_expr":
+                    t = list_concat_rule(o, r, lhs, rhs)
+                elif type(lhs.properties.get('value')) == choco_ast.StringAttr:
+                    t = str_concat_rule(o, r, lhs, rhs)
+            else:
+                t = arith_rule(o, r, lhs, rhs)
+
+
     elif isinstance(op, choco_ast.ExprName):
         t = var_read_rule(o, r, op.id.data)  # type: ignore
     elif isinstance(op, choco_ast.IfExpr):
@@ -410,8 +434,8 @@ def stmt_def_list_rule(o: LocalEnvironment, r: Type, sns: List[Operation]):
 
 # [PASS] rule
 # O, R |- pass
-# def pass_rule(o: LocalEnvironment, r: Type, ???):
-#     ???
+def pass_rule(o: LocalEnvironment, r: Type):
+    return
 
 
 # [EXPR-STMT] rule
@@ -453,21 +477,28 @@ def negate_rule(o: LocalEnvironment, r: Type, e: Operation) -> Type:
 
 # [ARITH] rule
 # O, R |- e1 op e2 : int
-# def arith_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation) -> Type:
-#     check_type(check_expr(o, r, e1), expected=int_type)
-#     check_type(check_expr(o, r, e2), expected=int_type)
-#
-#     return int_type
+def arith_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation) -> Type:
+    check_type(check_expr(o, r, e1), expected=int_type)
+    check_type(check_expr(o, r, e2), expected=int_type)
+
+    return int_type
 
 # [INT-COMPARE] rule
 # O, R |- e1 cmp_op e2 : bool
-# def int_compare_rule(o: LocalEnvironment, r: Type, ???) -> Type:
-#     ???
+def int_compare_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation) -> Type:
+    check_type(check_expr(o, r, e1), expected=int_type)
+    check_type(check_expr(o, r, e2), expected=int_type)
+
+    return bool_type
+
 
 # [BOOL-COMPARE] rule
 # O, R |- e1 cmp_op e2 : bool
-# def bool_compare_rule(o: LocalEnvironment, r: Type, ???) -> Type:
-#     ???
+def bool_compare_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation) -> Type:
+    check_type(check_expr(o, r, e1), expected=bool_type)
+    check_type(check_expr(o, r, e2), expected=bool_type)
+
+    return bool_type
 
 # [AND] rule
 # O, R |- e1 and e2 : bool
@@ -511,13 +542,20 @@ def cond_rule(
 
 # [STR-COMPARE] rule
 # O, R |- e1 cmp_op e2 : bool
-# def str_compare_rule(o: LocalEnvironment, r: Type, ???) -> Type:
-#     ???
+def str_compare_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation) -> Type:
+    check_type(check_expr(o, r, e1), expected=str_type)
+    check_type(check_expr(o, r, e2), expected=str_type)
+
+    return bool_type
 
 # [STR-CONCAT]
 # O, R |- e1 + e2 : str
-# def str_concat_rule(o: LocalEnvironment, r: Type, ???) -> Type:
-#     ???
+def str_concat_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation) -> Type:
+    check_type(check_expr(o, r, e1), expected=str_type)
+    check_type(check_expr(o, r, e2), expected=str_type)
+
+    return str_type
+
 
 # [STR-SELECT]
 # O, R |- e1[e2] : str
@@ -547,8 +585,7 @@ def list_display_rule(o: LocalEnvironment, r: Type, e: Operation) -> Type:
         temp = check_expr(o, r, expr)
         current = join(current, temp)
 
-    res = ListType()
-    res.elem_type = current
+    res = ListType(current)
 
     return res
 
@@ -561,8 +598,18 @@ def nil_rule(o: LocalEnvironment, r: Type, e: Operation) -> Type:
 
 # [LIST-CONCAT]
 # O, R |- e1 + e2 : [T]
-# def list_concat_rule(o: LocalEnvironment, r: Type, ???) -> Type:
-#     ???
+def list_concat_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation) -> Type:
+
+    list_t1 = check_expr(o, r, e1)
+    list_t2 = check_expr(o, r, e2)
+
+    t1 = list_t1.elem_type
+    t2 = list_t2.elem_type
+
+    t = join(t1, t2)
+
+    list_t = ListType(t)
+    return list_t
 
 # [LIST-SELECT]
 # O, R |- e1[e2] : T
@@ -573,8 +620,16 @@ def list_select_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation)
 
 # [LIST-ASSIGN-STMT]
 # O, R |- e1[e2] = e3
-# def list_assign_stmt_rule(o: LocalEnvironment, r: Type, ???):
-#     ???
+def list_assign_stmt_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation, e3: Operation):
+    list_t1 = check_expr(o, r, e1)
+    t1 = list_t1.elem_type
+
+    check_type(check_expr(o, r, e2), expected=int_type)
+    t3 = check_expr(o, r, e3)
+
+    check_assignment_compatibility(t3, t1)
+
+
 
 # [MULTI-ASSIGN-STMT]
 # O,R |- e1 = e2 = ... = en = e0
@@ -598,23 +653,35 @@ def list_select_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation)
 
 # [IF-ELSE]
 # O, R |- if e: b1 else: b2
-# def if_else_rule(o: LocalEnvironment, r: Type, ???):
-#     ???
+def if_else_rule(o: LocalEnvironment, r: Type, cond: Operation, then: Operation, or_else: Operation):
+    check_type(check_expr(o, r, cond), expected=bool_type)
+    check_expr(o, r, then)
+    check_expr(o, r, or_else)
 
 # [WHILE]
 # O, R |- while e: b
-# def while_rule(o: LocalEnvironment, r: Type, ???):
-#     ???
+def while_rule(o: LocalEnvironment, r: Type, cond: Operation, block: Operation):
+    check_type(check_expr(o, r, cond), expected=bool_type)
+    check_expr(o, r, block)
 
 # [FOR-STR]
 # O, R |- for id in e: b
-# def for_str_rule(o: LocalEnvironment, r: Type, ???):
-#     ???
+def for_str_rule(o: LocalEnvironment, r: Type, id: str, e: Operation, b: Operation):
+    t = o[id]
+    check_type(check_expr(o, r, e), expected=str_type)
+    check_assignment_compatibility(str_type, t)
+    check_expr(o, r, b)
 
 # [FOR-LIST]
 # O, R |- for id in e: b
-# def for_list_rule(o: LocalEnvironment, r: Type, ???):
-#     ???
+def for_list_rule(o: LocalEnvironment, r: Type, id: str, e: Operation, b: Operation):
+    t = o[id]
+    list_t1 = check_expr(o, r, e)
+    check_type(list_t1, expected=ListType)
+    check_assignment_compatibility(list_t1.elem_type, t)
+    check_expr(o, r, b)
+
+
 
 # [FUNC-DEF] rule
 # O, R |- def f(x1:T1, ... , xn:Tn)  [[-> T0]]? :b
