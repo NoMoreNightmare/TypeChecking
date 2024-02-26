@@ -126,7 +126,7 @@ def is_subtype(t1: Type, t2: Type) -> bool:
     if t1 == t2:
         return True
     elif t2 == object_type and (
-        t1 == int_type or t1 == bool_type or t1 == str_type or isinstance(t1, ListType)
+            t1 == int_type or t1 == bool_type or t1 == str_type or isinstance(t1, ListType)
     ):
         return True
     elif t1 == none_type and t2 == object_type:
@@ -143,20 +143,20 @@ def is_assignment_compatible(t1: Type, t2: Type) -> bool:
     if is_subtype(t1, t2) and t1 != bottom_type:
         return True
     elif (
-        (t1 == none_type)
-        and t2 != int_type
-        and t2 != bool_type
-        and t2 != str_type
-        and t2 != bottom_type
+            (t1 == none_type)
+            and t2 != int_type
+            and t2 != bool_type
+            and t2 != str_type
+            and t2 != bottom_type
     ):
         return True
     elif isinstance(t2, ListType) and t1 == empty_type:
         return True
     elif (
-        isinstance(t2, ListType)
-        and isinstance(t1, ListType)
-        and t1.elem_type == none_type
-        and is_assignment_compatible(none_type, t2.elem_type)
+            isinstance(t2, ListType)
+            and isinstance(t1, ListType)
+            and t1.elem_type == none_type
+            and is_assignment_compatible(none_type, t2.elem_type)
     ):
         return True
     else:
@@ -292,7 +292,7 @@ def check_stmt_or_def(o: LocalEnvironment, r: Type, op: Operation):
     elif isinstance(op, choco_ast.NonLocalDecl):
         raise Exception(
             "Support for choco_ast.NonLocalDecl not implemented yet"
-            )
+        )
     elif isinstance(op, choco_ast.FuncDef):
         raise Exception("Support for choco_ast.FuncDef not implemented yet")
     else:
@@ -455,24 +455,33 @@ def negate_rule(o: LocalEnvironment, r: Type, e: Operation) -> Type:
 
 # [AND] rule
 # O, R |- e1 and e2 : bool
-# def and_rule(o: LocalEnvironment, r: Type, ???) -> Type:
-#     ???
+def and_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation) -> Type:
+    check_type(check_expr(o, r, e1), expected=bool_type)
+    check_type(check_expr(o, r, e2), expected=bool_type)
+
+    return bool_type
+
 
 # [OR] rule
 # O, R |- e1 or e2 : bool
-# def or_rule(o: LocalEnvironment, r: Type, ???) -> Type:
-#     ???
+def or_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation) -> Type:
+    check_type(check_expr(o, r, e1), expected=bool_type)
+    check_type(check_expr(o, r, e2), expected=bool_type)
+
+    return bool_type
+
 
 # [NOT] rule
 # O, R |- not e : bool
-# def not_rule(o: LocalEnvironment, r: Type, ???) -> Type:
-#     ???
+def not_rule(o: LocalEnvironment, r: Type, e: Operation) -> Type:
+    check_type(check_expr(o, r, e), expected=bool_type)
+    return bool_type
 
 
 # [COND] rule
 # O, R |- e1 if e0 else e2 : T1 |_| T2
 def cond_rule(
-    o: LocalEnvironment, r: Type, e1: Operation, e0: Operation, e2: Operation
+        o: LocalEnvironment, r: Type, e1: Operation, e0: Operation, e2: Operation
 ) -> Type:
     # O, R |- e0: bool
     check_type(check_expr(o, r, e0), expected=bool_type)
@@ -496,13 +505,23 @@ def cond_rule(
 
 # [STR-SELECT]
 # O, R |- e1[e2] : str
-# def str_select_rule(o: LocalEnvironment, r: Type, ???) -> Type:
-#     ???
+def str_select_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation) -> Type:
+    check_type(check_expr(o, r, e1), expected=str_type)
+    check_type(check_expr(o, r, e2), expected=int_type)
+
+    return str_type
+
 
 # [IS]
 # O, R |- e1 is e2 : bool
-# def is_rule(o: LocalEnvironment, r: Type, ???) -> Type:
-#     ???
+def is_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation) -> Type:
+    t1 = check_expr(o, r, e1)
+    t2 = check_expr(o, r, e2)
+    if t1 not in [int_type, bool_type, str_type] and t2 not in [int_type, bool_type, str_type]:
+        return bool_type
+    else:
+        raise Exception("Semantic Error: ")
+
 
 # [LIST-DISPLAY]
 # O, R |- [e1, e2, ..., en] : [T]
@@ -512,12 +531,17 @@ def list_display_rule(o: LocalEnvironment, r: Type, e: Operation) -> Type:
         temp = check_expr(o, r, expr)
         current = join(current, temp)
 
-    return current
+    res = ListType()
+    res.elem_type = current
+
+    return res
+
 
 # [NIL]
 # O, R |- [] : <Empty>
 def nil_rule(o: LocalEnvironment, r: Type, e: Operation) -> Type:
     return empty_type
+
 
 # [LIST-CONCAT]
 # O, R |- e1 + e2 : [T]
@@ -526,8 +550,10 @@ def nil_rule(o: LocalEnvironment, r: Type, e: Operation) -> Type:
 
 # [LIST-SELECT]
 # O, R |- e1[e2] : T
-# def list_select_rule(o: LocalEnvironment, r: Type, ???) -> Type:
-#     ???
+def list_select_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation) -> Type:
+    t = check_expr(o, r, e1)
+    check_type(check_expr(o, r, e2), expected=int_type)
+    return t.elem_type
 
 # [LIST-ASSIGN-STMT]
 # O, R |- e1[e2] = e3
