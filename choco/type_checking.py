@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from functools import reduce
 from typing import Dict, List, Optional, Tuple, Union
 
+import xdsl.dialects.builtin
 from xdsl.dialects.builtin import ModuleOp
 from xdsl.ir import Attribute, MLContext, Operation
 from xdsl.passes import ModulePass
@@ -276,7 +277,13 @@ def check_stmt_or_def(o: LocalEnvironment, r: Type, op: Operation):
         e1 = op.literal.op
         return var_init_rule(o, r, id, e1)
     elif isinstance(op, choco_ast.Assign):
-        raise Exception("Support for choco_ast.Assign not implemented yet")
+        if isinstance(op.target.op, choco_ast.ExprName):
+            id = op.target.op.id.data
+            e1 = op.value.op
+        else:
+            raise Exception("???")
+
+        return var_assign_stmt_rule(o, r, id, e1)
     elif isinstance(op, choco_ast.Pass):
         raise Exception("Support for choco_ast.Pass not implemented yet")
     elif isinstance(op, choco_ast.Return):
@@ -312,7 +319,15 @@ def check_expr(o: LocalEnvironment, r: Type, op: Operation) -> Type:
             raise Exception(
                 "Support for some choco_ast.UnaryExpr not implemented yet")
     elif isinstance(op, choco_ast.BinaryExpr):
-        raise Exception("Support for choco_ast.BinaryExpr not implemented yet")
+        lhs = op.lhs.op
+        binary_op = op.op.data
+        rhs = op.rhs.op
+        if binary_op == "and":
+            t = and_rule(o, r, lhs, rhs)
+        elif binary_op == "or":
+            t = or_rule(o, r, lhs, rhs)
+        elif binary_op == "is":
+            t = is_rule(o, r, lhs, rhs)
     elif isinstance(op, choco_ast.ExprName):
         t = var_read_rule(o, r, op.id.data)  # type: ignore
     elif isinstance(op, choco_ast.IfExpr):
@@ -375,6 +390,7 @@ def var_init_rule(o: LocalEnvironment, r: Type, id: str, e1: Operation):
 # [VAR-ASSIGN-STMT]
 # O, R |- id = e1
 def var_assign_stmt_rule(o: LocalEnvironment, r: Type, id: str, e1: Operation):
+
     t = o[id]
 
     t1 = check_expr(o, r, e1)
