@@ -323,7 +323,13 @@ def check_expr(o: LocalEnvironment, r: Type, op: Operation) -> Type:
     elif isinstance(op, choco_ast.IndexExpr):
         raise Exception("Support for choco_ast.IndexExpr not implemented yet")
     elif isinstance(op, choco_ast.ListExpr):
-        raise Exception("Support for choco_ast.ListExpr not implemented yet")
+        if op.elems.blocks[0].is_empty:
+            t = nil_rule(o, r, op)
+        elif not op.elems.blocks[0].is_empty:
+            t = list_display_rule(o, r, op)
+        else:
+            raise Exception("???")
+
     elif isinstance(op, choco_ast.CallExpr):
         raise Exception("Support for choco_ast.CallExpr not implemented yet")
 
@@ -368,8 +374,12 @@ def var_init_rule(o: LocalEnvironment, r: Type, id: str, e1: Operation):
 
 # [VAR-ASSIGN-STMT]
 # O, R |- id = e1
-# def var_assign_stmt_rule(o: LocalEnvironment, r: Type, ???):
-#     ???
+def var_assign_stmt_rule(o: LocalEnvironment, r: Type, id: str, e1: Operation):
+    t = o[id]
+
+    t1 = check_expr(o, r, e1)
+
+    check_assignment_compatibility(t1, t)
 
 
 # [STMT-DEF-LIST] rule
@@ -427,8 +437,11 @@ def negate_rule(o: LocalEnvironment, r: Type, e: Operation) -> Type:
 
 # [ARITH] rule
 # O, R |- e1 op e2 : int
-# def arith_rule(o: LocalEnvironment, r: Type, ???) -> Type:
-#     ???
+# def arith_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation) -> Type:
+#     check_type(check_expr(o, r, e1), expected=int_type)
+#     check_type(check_expr(o, r, e2), expected=int_type)
+#
+#     return int_type
 
 # [INT-COMPARE] rule
 # O, R |- e1 cmp_op e2 : bool
@@ -493,13 +506,18 @@ def cond_rule(
 
 # [LIST-DISPLAY]
 # O, R |- [e1, e2, ..., en] : [T]
-# def list_display_rule(o: LocalEnvironment, r: Type, ???) -> Type:
-#     ???
+def list_display_rule(o: LocalEnvironment, r: Type, e: Operation) -> Type:
+    current = e.elems.blocks[0].ops.first
+    for expr in e.elems.blocks[0].ops:
+        temp = check_expr(o, r, expr)
+        current = join(current, temp)
+
+    return current
 
 # [NIL]
 # O, R |- [] : <Empty>
-# def nil_rule(o: LocalEnvironment, r: Type, ???) -> Type:
-#     ???
+def nil_rule(o: LocalEnvironment, r: Type, e: Operation) -> Type:
+    return empty_type
 
 # [LIST-CONCAT]
 # O, R |- e1 + e2 : [T]
