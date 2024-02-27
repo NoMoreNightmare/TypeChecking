@@ -343,16 +343,15 @@ def check_stmt_or_def(o: LocalEnvironment, r: Type, op: Operation):
         func_name = op.func_name.data
         # params = None
         func_body = None
-        # return_type = None
+        return_type = None
         # if op.params.block.first_op:
         #     params = op.params.op
         if op.func_body.block.first_op:
             func_body = op.func_body.op
+        if op.return_type.block.first_op:
+            return_type = op.return_type.op
 
-        # if op.return_type.block.first_op:
-        #     return_type = op.return_type.op
-
-        return func_def_rule(o, r, func_name, func_body)
+        return func_def_rule(o, r, func_name, func_body, return_type)
     else:
         return expr_stmt_rule(o, r, op)
 
@@ -771,7 +770,7 @@ def for_list_rule(o: LocalEnvironment, r: Type, id: str, e: Operation, b: Operat
 
 # [FUNC-DEF] rule
 # O, R |- def f(x1:T1, ... , xn:Tn)  [[-> T0]]? :b
-def func_def_rule(o: LocalEnvironment, r: Type, func_name: str, func_body: Operation):
+def func_def_rule(o: LocalEnvironment, r: Type, func_name: str, func_body: Operation, return_type: Operation):
     func = o[func_name]
     O:LocalEnvironment = {
         "len": FunctionInfo(FunctionType([object_type], int_type), ["arg"], []),
@@ -784,8 +783,8 @@ def func_def_rule(o: LocalEnvironment, r: Type, func_name: str, func_body: Opera
     # print(func:FunctionInfo.func_type)
     t = none_type
 
-    # if return_type:
-    #     t = check_expr(o, r, return_type)
+    if return_type:
+        t = Type.from_op(return_type)
 
     if func.params:
         # for i, j in func.params:
@@ -798,6 +797,6 @@ def func_def_rule(o: LocalEnvironment, r: Type, func_name: str, func_body: Opera
             O.update({i})
 
     if func_body:
-        check_stmt_or_def(O, r, func_body)
+        check_stmt_or_def(O, t, func_body)
 
 
