@@ -166,17 +166,19 @@ def is_assignment_compatible(t1: Type, t2: Type) -> bool:
 
 def check_assignment_compatibility(t1: Type, t2: Type):
     if not is_assignment_compatible(t1, t2):
-        raise SemanticError(f" Expected {t1} and {t2} to be assignment compatible")
-
+        print("Semantic error:")
+        exit(0)
 
 def check_type(found: Type, expected: Type):
     if found != expected:
-        raise SemanticError(f"Found `{found}' but expected {expected}")
+        print("Semantic error:")
+        exit(0)
 
 
 def check_list_type(found: Type) -> Type:
     if not isinstance(found, ListType):
-        raise SemanticError(f"Found `{found}' but expected a list type")
+        print("Semantic error:")
+        exit(0)
     else:
         return found.elem_type
 
