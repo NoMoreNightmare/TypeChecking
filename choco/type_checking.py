@@ -415,10 +415,13 @@ def check_expr(o: LocalEnvironment, r: Type, op: Operation) -> Type:
         if isinstance(e1, choco_ast.ListExpr):
             t = list_select_rule(o, r, e1, e2)
         elif isinstance(e1, choco_ast.Literal):
-
             t = str_select_rule(o, r, e1, e2)
         elif isinstance(e1, choco_ast.ExprName):
-            t = list_select_rule(o, r, e1, e2)
+            e1_type = check_expr(o, r, e1)
+            if e1_type == str_type:
+                t = str_select_rule(o, r, e1, e2)
+            elif isinstance(e1_type, ListType):
+                t = list_select_rule(o, r, e1, e2)
         else:
             print("Semantic error:")
             exit(0)
@@ -478,8 +481,10 @@ def var_init_rule(o: LocalEnvironment, r: Type, id: str, e1: Operation):
 def var_assign_stmt_rule(o: LocalEnvironment, r: Type, id: str, e1: Operation):
     t = o[id]
     t1 = check_expr(o, r, e1)
-
-    check_assignment_compatibility(t1, t)
+    if isinstance(t1, ListType):
+        check_assignment_compatibility(t1.elem_type, t)
+    else:
+        check_assignment_compatibility(t1, t)
 
 
 # [STMT-DEF-LIST] rule
