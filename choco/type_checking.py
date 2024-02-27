@@ -292,6 +292,7 @@ def check_stmt_or_def(o: LocalEnvironment, r: Type, op: Operation):
         elif isinstance(op.target.op, choco_ast.IndexExpr):
             # e1 = op.target.op.value.op
             # e2 = op.target.op.index.op
+
             e1 = op.target.op
             e3 = op.value.op
             # return list_assign_stmt_rule(o, r, e1, e2, e3)
@@ -467,7 +468,6 @@ def var_init_rule(o: LocalEnvironment, r: Type, id: str, e1: Operation):
 # O, R |- id = e1
 def var_assign_stmt_rule(o: LocalEnvironment, r: Type, id: str, e1: Operation):
     t = o[id]
-
     t1 = check_expr(o, r, e1)
 
     check_assignment_compatibility(t1, t)
@@ -680,8 +680,8 @@ def list_assign_stmt_rule(o: LocalEnvironment, r: Type, e1: Operation, e3: Opera
     check_type(check_expr(o, r, e2), expected=int_type)
 
     t3 = check_expr(o, r, e3)
+    check_assignment_compatibility(t3, t1.elem_type)
 
-    check_assignment_compatibility(t3, t1)
 
 
 
