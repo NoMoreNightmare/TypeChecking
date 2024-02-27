@@ -191,8 +191,8 @@ class FunctionInfo:
 
     def __post_init__(self):
         if len(self.func_type.inputs) != len(self.params):
-            raise Exception(f"Expected same number of input types and parameter names")
-
+            print("Semantic error:")
+            exit(0)
 
 LocalEnvironment = Dict[str, Union[Type, FunctionInfo]]
 
@@ -290,7 +290,8 @@ def check_stmt_or_def(o: LocalEnvironment, r: Type, op: Operation):
             e3 = op.value.op
             return list_assign_stmt_rule(o, r, e1, e2, e3)
         else:
-            raise Exception("???")
+            print("Semantic error:")
+            exit(0)
 
 
     elif isinstance(op, choco_ast.Pass):
@@ -327,8 +328,8 @@ def check_expr(o: LocalEnvironment, r: Type, op: Operation) -> Type:
         elif op_name == "not":
             t = not_rule(o, r, e)
         else:
-            raise Exception(
-                "Support for some choco_ast.UnaryExpr not implemented yet")
+            print("Semantic error:")
+            exit(0)
     elif isinstance(op, choco_ast.BinaryExpr):
         lhs = op.lhs.op
         binary_op = op.op.data
@@ -353,7 +354,7 @@ def check_expr(o: LocalEnvironment, r: Type, op: Operation) -> Type:
             if binary_op == "+":
                 if type(lhs.properties.get('value')) == choco_ast.IntegerAttr:
                     t = arith_rule(o, r, lhs, rhs)
-                elif lhs.name == "choco.ast.list_expr":
+                elif isinstance(lhs, choco_ast.ListExpr) and isinstance(rhs, choco_ast.ListExpr):
                     t = list_concat_rule(o, r, lhs, rhs)
                 elif type(lhs.properties.get('value')) == choco_ast.StringAttr:
                     t = str_concat_rule(o, r, lhs, rhs)
@@ -382,7 +383,9 @@ def check_expr(o: LocalEnvironment, r: Type, op: Operation) -> Type:
     elif isinstance(op, choco_ast.CallExpr):
         raise Exception("Support for choco_ast.CallExpr not implemented yet")
 
-    assert isinstance(t, Type)
+    if not isinstance(t, Type):
+        print("Semantic error:")
+        exit(0)
 
     op.properties["type_hint"] = to_attribute(t)
 
@@ -398,11 +401,11 @@ def var_read_rule(o: LocalEnvironment, r: Type, id: str) -> Type:
     # O(id) = T, where T is not a function type.
     t = o.get(id)
     if t is None:
-        raise SemanticError(f"Unknown identifier {id} used")
+        print("Semantic error:")
+        exit(0)
     if isinstance(t, FunctionInfo):
-        raise SemanticError(
-            f"Function identifier `{id}' used where value identifier expected"
-        )
+        print("Semantic error:")
+        exit(0)
     return t
 
 
@@ -412,9 +415,8 @@ def var_init_rule(o: LocalEnvironment, r: Type, id: str, e1: Operation):
     # O(id) = T
     t = o[id]
     if isinstance(t, FunctionInfo):
-        raise SemanticError(
-            f"Function identifier `{id}' used where value identifier expected"
-        )
+        print("Semantic error:")
+        exit(0)
     # O, R |- e1: T1
     t1 = check_expr(o, r, e1)
     # T1 ≤a T
