@@ -169,6 +169,7 @@ def check_assignment_compatibility(t1: Type, t2: Type):
         print("Semantic error:")
         exit(0)
 
+
 def check_type(found: Type, expected: Type):
     if found != expected:
         print("Semantic error:")
@@ -193,6 +194,7 @@ class FunctionInfo:
         if len(self.func_type.inputs) != len(self.params):
             print("Semantic error:")
             exit(0)
+
 
 LocalEnvironment = Dict[str, Union[Type, FunctionInfo]]
 
@@ -435,8 +437,8 @@ def check_expr(o: LocalEnvironment, r: Type, op: Operation) -> Type:
             exit(0)
 
     elif isinstance(op, choco_ast.CallExpr):
-        t = invoke_rule(o, r, op)
 
+        t = invoke_rule(o, r, op)
 
     if not isinstance(t, Type):
         print("Semantic error:")
@@ -551,6 +553,7 @@ def arith_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation) -> Ty
 
     return int_type
 
+
 # [INT-COMPARE] rule
 # O, R |- e1 cmp_op e2 : bool
 def int_compare_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation) -> Type:
@@ -567,6 +570,7 @@ def bool_compare_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation
     check_type(check_expr(o, r, e2), expected=bool_type)
 
     return bool_type
+
 
 # [AND] rule
 # O, R |- e1 and e2 : bool
@@ -616,6 +620,7 @@ def str_compare_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation)
 
     return bool_type
 
+
 # [STR-CONCAT]
 # O, R |- e1 + e2 : str
 def str_concat_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation) -> Type:
@@ -655,7 +660,6 @@ def list_display_rule(o: LocalEnvironment, r: Type, e: Operation) -> Type:
         temp = check_expr(o, r, expr)
         current = join(current, temp)
 
-
     res = ListType(current)
     return res
 
@@ -669,7 +673,6 @@ def nil_rule(o: LocalEnvironment, r: Type, e: Operation) -> Type:
 # [LIST-CONCAT]
 # O, R |- e1 + e2 : [T]
 def list_concat_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation) -> Type:
-
     list_t1 = check_expr(o, r, e1)
     list_t2 = check_expr(o, r, e2)
 
@@ -681,6 +684,7 @@ def list_concat_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation)
     list_t = ListType(t)
     return list_t
 
+
 # [LIST-SELECT]
 # O, R |- e1[e2] : T
 def list_select_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation) -> Type:
@@ -688,10 +692,10 @@ def list_select_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation)
     check_type(check_expr(o, r, e2), expected=int_type)
     return t.elem_type
 
+
 # [LIST-ASSIGN-STMT]
 # O, R |- e1[e2] = e3
 def list_assign_stmt_rule(o: LocalEnvironment, r: Type, e1: Operation, e3: Operation):
-
     t1 = check_expr(o, r, e1)
 
     e2 = e1.index.op
@@ -699,8 +703,6 @@ def list_assign_stmt_rule(o: LocalEnvironment, r: Type, e1: Operation, e3: Opera
 
     t3 = check_expr(o, r, e3)
     check_assignment_compatibility(t3, t1)
-
-
 
 
 # [MULTI-ASSIGN-STMT]
@@ -741,6 +743,7 @@ def multi_assign_stmt(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation
 # [INVOKE]
 # O, R |- f(e1, e2, ..., en): T0
 def invoke_rule(o: LocalEnvironment, r: Type, op: Operation) -> Type:
+    print('2222')
     func = o[op.func.data]
     i = 0
     for param in op.args.ops:
@@ -750,16 +753,19 @@ def invoke_rule(o: LocalEnvironment, r: Type, op: Operation) -> Type:
 
     return func.func_type.output
 
+
 # [RETURN-e] rule
 # O, R |- return e
 def return_e_rule(o: LocalEnvironment, r: Type, e: Operation):
     t = check_expr(o, r, e)
     check_assignment_compatibility(t, r)
 
+
 # [RETURN] rule
 # O, R |- return
 def return_rule(o: LocalEnvironment, r: Type):
     check_assignment_compatibility(none_type, r)
+
 
 # [IF-ELSE]
 # O, R |- if e: b1 else: b2
@@ -769,19 +775,22 @@ def if_else_rule(o: LocalEnvironment, r: Type, cond: Operation, then: Operation,
     if or_else:
         check_stmt_or_def(o, r, or_else)
 
+
 # [WHILE]
 # O, R |- while e: b
 def while_rule(o: LocalEnvironment, r: Type, cond: Operation, block: Operation):
     check_type(check_expr(o, r, cond), expected=bool_type)
     check_stmt_or_def(o, r, block)
 
+
 # [FOR-STR]
 # O, R |- for id in e: b
 def for_str_rule(o: LocalEnvironment, r: Type, id: str, e: Operation, b: Operation):
     t = o[id]
-    check_type(check_expr(o, r, e),expected=str_type)
+    check_type(check_expr(o, r, e), expected=str_type)
     check_assignment_compatibility(str_type, t)
     check_stmt_or_def(o, r, b)
+
 
 # [FOR-LIST]
 # O, R |- for id in e: b
@@ -792,12 +801,12 @@ def for_list_rule(o: LocalEnvironment, r: Type, id: str, e: Operation, b: Operat
     check_stmt_or_def(o, r, b)
 
 
-
 # [FUNC-DEF] rule
 # O, R |- def f(x1:T1, ... , xn:Tn)  [[-> T0]]? :b
 def func_def_rule(o: LocalEnvironment, r: Type, func_name: str, func_body: Operation, return_type: Operation):
+    print('1111')
     func = o[func_name]
-    O:LocalEnvironment = {
+    O: LocalEnvironment = {
         "len": FunctionInfo(FunctionType([object_type], int_type), ["arg"], []),
         "print": FunctionInfo(FunctionType([object_type], none_type), ["arg"], []),
         "input": FunctionInfo(FunctionType([], str_type), [], []),
@@ -816,12 +825,12 @@ def func_def_rule(o: LocalEnvironment, r: Type, func_name: str, func_body: Opera
         # print(type(func.params))
         for i in range(len(func.params)):
             O.update({func.params[i]: func.func_type.inputs[i]})
+    for i in o.keys():
+        O.update({i: o.get(i)})
     # print(O)
     if func.nested_defs:
         for i in func.nested_defs:
-            O.update({i})
+            O.update({i[0]: i[1]})
 
     if func_body:
         check_stmt_or_def(O, t, func_body)
-
-
