@@ -304,7 +304,10 @@ def check_stmt_or_def(o: LocalEnvironment, r: Type, op: Operation):
     elif isinstance(op, choco_ast.Pass):
         return pass_rule(o, r)
     elif isinstance(op, choco_ast.Return):
-        raise Exception("Support for choco_ast.Return not implemented yet")
+        if op.value.block.first_op:
+            return return_e_rule(o, r, op.value.op)
+        else:
+            return return_rule(o, r)
     elif isinstance(op, choco_ast.If):
         cond = op.cond.op
         then = op.then.op
@@ -725,13 +728,14 @@ def multi_assign_stmt(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation
 
 # [RETURN-e] rule
 # O, R |- return e
-# def return_e_rule(o: LocalEnvironment, r: Type, ???):
-#     ???
+def return_e_rule(o: LocalEnvironment, r: Type, e: Operation):
+    t = check_expr(o, r, e)
+    check_assignment_compatibility(t, r)
 
 # [RETURN] rule
 # O, R |- return
-# def return_rule(o: LocalEnvironment, r: Type, ???):
-#     ???
+def return_rule(o: LocalEnvironment, r: Type):
+    check_assignment_compatibility(none_type, r)
 
 # [IF-ELSE]
 # O, R |- if e: b1 else: b2
