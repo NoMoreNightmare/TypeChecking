@@ -412,7 +412,13 @@ def check_expr(o: LocalEnvironment, r: Type, op: Operation) -> Type:
     elif isinstance(op, choco_ast.IndexExpr):
         e1 = op.value.op
         e2 = op.index.op
-        t = list_select_rule(o, r, e1, e2)
+        if isinstance(e1, choco_ast.ListExpr):
+            t = list_select_rule(o, r, e1, e2)
+        elif isinstance(e1, choco_ast.Literal):
+            t = str_select_rule(o, r, e1, e2)
+        else:
+            print("Semantic error:")
+            exit(0)
     elif isinstance(op, choco_ast.ListExpr):
         if op.elems.blocks[0].is_empty:
             t = nil_rule(o, r, op)
@@ -669,7 +675,6 @@ def list_concat_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation)
 def list_select_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation) -> Type:
     t = check_expr(o, r, e1)
     check_type(check_expr(o, r, e2), expected=int_type)
-    print()
     return t.elem_type
 
 # [LIST-ASSIGN-STMT]
