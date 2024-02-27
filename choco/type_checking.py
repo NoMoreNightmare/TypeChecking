@@ -587,13 +587,14 @@ def is_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation) -> Type:
 # [LIST-DISPLAY]
 # O, R |- [e1, e2, ..., en] : [T]
 def list_display_rule(o: LocalEnvironment, r: Type, e: Operation) -> Type:
-    current = e.elems.blocks[0].ops.first
+    current = check_expr(o, r, e.elems.blocks[0].ops.first)
+
     for expr in e.elems.blocks[0].ops:
         temp = check_expr(o, r, expr)
         current = join(current, temp)
 
-    res = ListType(current)
 
+    res = ListType(current)
     return res
 
 
