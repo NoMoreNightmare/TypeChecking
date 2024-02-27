@@ -321,7 +321,8 @@ def check_stmt_or_def(o: LocalEnvironment, r: Type, op: Operation):
         e = op.iter.op
         id = op.iter_name.data
         body = op.body.op
-        if isinstance(e, choco_ast.StringAttr):
+        print(type(e))
+        if isinstance(e, choco_ast.Literal):
             return for_str_rule(o, r, id, e, body)
         elif isinstance(e, choco_ast.ListExpr):
             return for_list_rule(o, r, id, e, body)
@@ -746,7 +747,7 @@ def while_rule(o: LocalEnvironment, r: Type, cond: Operation, block: Operation):
 # O, R |- for id in e: b
 def for_str_rule(o: LocalEnvironment, r: Type, id: str, e: Operation, b: Operation):
     t = o[id]
-    check_expr(o, r, e)
+    check_type(check_expr(o, r, e),expected=str_type)
     check_assignment_compatibility(str_type, t)
     check_stmt_or_def(o, r, b)
 
