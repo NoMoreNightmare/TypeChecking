@@ -230,6 +230,7 @@ def build_env(module: ModuleOp) -> LocalEnvironment:
             name, type = typed_var.var_name.data, Type.from_op(  # type: ignore
                 typed_var.type.op
             )
+
             self.o.update({name: type})
 
         def traverse_func_def(self, func_def: choco_ast.FuncDef):
@@ -321,7 +322,6 @@ def check_stmt_or_def(o: LocalEnvironment, r: Type, op: Operation):
         e = op.iter.op
         id = op.iter_name.data
         body = op.body.op
-        print(type(e))
         if isinstance(e, choco_ast.Literal):
             return for_str_rule(o, r, id, e, body)
         elif isinstance(e, choco_ast.ListExpr):
@@ -336,7 +336,19 @@ def check_stmt_or_def(o: LocalEnvironment, r: Type, op: Operation):
             "Support for choco_ast.NonLocalDecl not implemented yet"
         )
     elif isinstance(op, choco_ast.FuncDef):
-        raise Exception("Support for choco_ast.FuncDef not implemented yet")
+
+        func_name = op.func_name.data
+        params = None
+        func_body = None
+        return_type = None
+        if op.params.block.first_op:
+            params = op.params.op
+        if op.func_body.block.first_op:
+            func_body = op.func_body.op
+        if op.return_type.block.first_op:
+            return_type = op.return_type.op
+
+        return func_def_rule(o, r, func_name, params, func_body, return_type)
     else:
         return expr_stmt_rule(o, r, op)
 
@@ -658,15 +670,6 @@ def list_select_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation)
 
 # [LIST-ASSIGN-STMT]
 # O, R |- e1[e2] = e3
-# def list_assign_stmt_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation, e3: Operation):
-#     list_t1 = check_expr(o, r, e1)
-#
-#     t1 = list_t1.elem_type
-#
-#     check_type(check_expr(o, r, e2), expected=int_type)
-#     t3 = check_expr(o, r, e3)
-#
-#     check_assignment_compatibility(t3, t1)
 def list_assign_stmt_rule(o: LocalEnvironment, r: Type, e1: Operation, e3: Operation):
     t1 = check_expr(o, r, e1)
 
@@ -763,5 +766,31 @@ def for_list_rule(o: LocalEnvironment, r: Type, id: str, e: Operation, b: Operat
 
 # [FUNC-DEF] rule
 # O, R |- def f(x1:T1, ... , xn:Tn)  [[-> T0]]? :b
-# def func_def_rule(o: LocalEnvironment, r: Type, ???):
-#     ???
+def func_def_rule(o: LocalEnvironment, r: Type, func_name: str, params: Operation, func_body: Operation, return_type: Operation):
+    func = o[func_name]
+    O:LocalEnvironment = {
+        "len": FunctionInfo(FunctionType([object_type], int_type), ["arg"], []),
+        "print": FunctionInfo(FunctionType([object_type], none_type), ["arg"], []),
+        "input": FunctionInfo(FunctionType([], str_type), [], []),
+    }
+
+    # print(type(func.func_type.inputs))
+
+    # print(func:FunctionInfo.func_type)
+    t = none_type
+
+    # if return_type:
+    #     t = check_expr(o, r, return_type)
+
+    if params:
+        # for i, j in func.params:
+        # print(type(func.params))
+        for i in range(len(func.params)):
+            O.update({func.params[i]: func.func_type.inputs[i]})
+    # print(O)
+    if func_body:
+        for i in func.nested_defs:
+            O.update({i})
+        check_stmt_or_def(O, r, func_body)
+
+
