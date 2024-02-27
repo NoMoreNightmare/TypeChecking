@@ -418,10 +418,11 @@ def check_expr(o: LocalEnvironment, r: Type, op: Operation) -> Type:
             t = str_select_rule(o, r, e1, e2)
         elif isinstance(e1, choco_ast.ExprName):
             e1_type = check_expr(o, r, e1)
-            if e1_type == str_type:
-                t = str_select_rule(o, r, e1, e2)
-            elif isinstance(e1_type, ListType):
-                t = list_select_rule(o, r, e1, e2)
+            # if e1_type == str_type:
+            #     t = str_select_rule(o, r, e1, e2)
+            # elif isinstance(e1_type, ListType):
+            #     t = list_select_rule(o, r, e1, e2)
+            t = list_select_rule(o, r, e1, e2)
         else:
             print("Semantic error:")
             exit(0)
