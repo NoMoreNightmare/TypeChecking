@@ -279,7 +279,11 @@ def check_stmt_or_def(o: LocalEnvironment, r: Type, op: Operation):
         e1 = op.literal.op
         return var_init_rule(o, r, id, e1)
     elif isinstance(op, choco_ast.Assign):
-        if isinstance(op.target.op, choco_ast.ExprName):
+        if isinstance(op.value.op, choco_ast.Assign):
+            lhs = op.target.op
+            rhs = op.value.op
+            return multi_assign_stmt(o, r, lhs, rhs)
+        elif isinstance(op.target.op, choco_ast.ExprName):
             check_expr(o, r, op.target.op)
             id = op.target.op.id.data
             e1 = op.value.op
@@ -647,8 +651,28 @@ def list_assign_stmt_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Opera
 
 # [MULTI-ASSIGN-STMT]
 # O,R |- e1 = e2 = ... = en = e0
-def multi_assign_stmt(o: LocalEnvironment, r: Type ):
-    pass
+def multi_assign_stmt(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation):
+    list_expr = []
+    list_expr.append(e1)
+    while isinstance(e2, choco_ast.Assign):
+        lhs = e2.target.op
+        rhs = e2.value.op
+
+        list_expr.append(lhs)
+        e2 = rhs
+
+    e0 = e2
+
+    t0 = check_expr(o, r, e0)
+    if t0 == ListType(none_type):
+        print("Semantic error:")
+        exit(0)
+
+    for expr in list_expr:
+        check_expr(o, r, expr)
+        id = expr.id.data
+        var_assign_stmt_rule(o, r, id, e0)
+
 
 # [INVOKE]
 # O, R |- f(e1, e2, ..., en): T0
