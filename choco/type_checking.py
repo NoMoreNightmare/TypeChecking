@@ -289,10 +289,12 @@ def check_stmt_or_def(o: LocalEnvironment, r: Type, op: Operation):
             e1 = op.value.op
             return var_assign_stmt_rule(o, r, id, e1)
         elif isinstance(op.target.op, choco_ast.IndexExpr):
-            e1 = op.target.op.value.op
-            e2 = op.target.op.index.op
+            # e1 = op.target.op.value.op
+            # e2 = op.target.op.index.op
+            e1 = op.target.op
             e3 = op.value.op
-            return list_assign_stmt_rule(o, r, e1, e2, e3)
+            # return list_assign_stmt_rule(o, r, e1, e2, e3)
+            return list_assign_stmt_rule(o, r, e1, e3)
         else:
             print("Semantic error:")
             exit(0)
@@ -637,12 +639,21 @@ def list_select_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation)
 
 # [LIST-ASSIGN-STMT]
 # O, R |- e1[e2] = e3
-def list_assign_stmt_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation, e3: Operation):
-    list_t1 = check_expr(o, r, e1)
+# def list_assign_stmt_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation, e3: Operation):
+#     list_t1 = check_expr(o, r, e1)
+#
+#     t1 = list_t1.elem_type
+#
+#     check_type(check_expr(o, r, e2), expected=int_type)
+#     t3 = check_expr(o, r, e3)
+#
+#     check_assignment_compatibility(t3, t1)
+def list_assign_stmt_rule(o: LocalEnvironment, r: Type, e1: Operation, e3: Operation):
+    t1 = check_expr(o, r, e1)
 
-    t1 = list_t1.elem_type
-
+    e2 = e1.index.op
     check_type(check_expr(o, r, e2), expected=int_type)
+
     t3 = check_expr(o, r, e3)
 
     check_assignment_compatibility(t3, t1)
@@ -674,10 +685,11 @@ def multi_assign_stmt(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation
             id = expr.id.data
             var_assign_stmt_rule(o, r, id, e0)
         elif isinstance(expr, choco_ast.IndexExpr):
-            check_expr(o, r, expr)
-            e1 = expr.value.op
-            e2 = expr.index.op
-            list_assign_stmt_rule(o, r, e1, e2, e0)
+            # check_expr(o, r, expr)
+            # e1 = expr.value.op
+            # e2 = expr.index.op
+            # list_assign_stmt_rule(o, r, e1, e2, e0)
+            list_assign_stmt_rule(o, r, expr, e0)
         else:
             print("Semantic error:")
             exit(0)
