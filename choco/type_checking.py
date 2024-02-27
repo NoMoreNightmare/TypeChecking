@@ -669,7 +669,8 @@ def list_concat_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation)
 def list_select_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation) -> Type:
     t = check_expr(o, r, e1)
     check_type(check_expr(o, r, e2), expected=int_type)
-    return t
+    print()
+    return t.elem_type
 
 # [LIST-ASSIGN-STMT]
 # O, R |- e1[e2] = e3
@@ -680,7 +681,7 @@ def list_assign_stmt_rule(o: LocalEnvironment, r: Type, e1: Operation, e3: Opera
     check_type(check_expr(o, r, e2), expected=int_type)
 
     t3 = check_expr(o, r, e3)
-    check_assignment_compatibility(t3, t1.elem_type)
+    check_assignment_compatibility(t3, t1)
 
 
 
