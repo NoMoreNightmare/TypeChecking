@@ -338,17 +338,17 @@ def check_stmt_or_def(o: LocalEnvironment, r: Type, op: Operation):
     elif isinstance(op, choco_ast.FuncDef):
 
         func_name = op.func_name.data
-        params = None
-        func_body = None
-        return_type = None
-        if op.params.block.first_op:
-            params = op.params.op
-        if op.func_body.block.first_op:
-            func_body = op.func_body.op
-        if op.return_type.block.first_op:
-            return_type = op.return_type.op
+        # params = None
+        # func_body = None
+        # return_type = None
+        # if op.params.block.first_op:
+        #     params = op.params.op
+        # if op.func_body.block.first_op:
+        #     func_body = op.func_body.blocks
+        # if op.return_type.block.first_op:
+        #     return_type = op.return_type.op
 
-        return func_def_rule(o, r, func_name, params, func_body, return_type)
+        return func_def_rule(o, r, func_name)
     else:
         return expr_stmt_rule(o, r, op)
 
@@ -766,7 +766,7 @@ def for_list_rule(o: LocalEnvironment, r: Type, id: str, e: Operation, b: Operat
 
 # [FUNC-DEF] rule
 # O, R |- def f(x1:T1, ... , xn:Tn)  [[-> T0]]? :b
-def func_def_rule(o: LocalEnvironment, r: Type, func_name: str, params: Operation, func_body: Operation, return_type: Operation):
+def func_def_rule(o: LocalEnvironment, r: Type, func_name: str):
     func = o[func_name]
     O:LocalEnvironment = {
         "len": FunctionInfo(FunctionType([object_type], int_type), ["arg"], []),
@@ -782,15 +782,15 @@ def func_def_rule(o: LocalEnvironment, r: Type, func_name: str, params: Operatio
     # if return_type:
     #     t = check_expr(o, r, return_type)
 
-    if params:
+    if func.params:
         # for i, j in func.params:
         # print(type(func.params))
         for i in range(len(func.params)):
             O.update({func.params[i]: func.func_type.inputs[i]})
     # print(O)
-    if func_body:
+    if func.nested_defs:
         for i in func.nested_defs:
             O.update({i})
-        check_stmt_or_def(O, r, func_body)
+        check_stmt_or_def(O, r, func.nested_defs)
 
 
