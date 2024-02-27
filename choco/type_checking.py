@@ -467,10 +467,11 @@ def var_init_rule(o: LocalEnvironment, r: Type, id: str, e1: Operation):
 # O, R |- id = e1
 def var_assign_stmt_rule(o: LocalEnvironment, r: Type, id: str, e1: Operation):
     t = o[id]
-
     t1 = check_expr(o, r, e1)
-
-    check_assignment_compatibility(t1, t)
+    if isinstance(t1, ListType):
+        check_assignment_compatibility(t1.elem_type, t)
+    else:
+        check_assignment_compatibility(t1, t)
 
 
 # [STMT-DEF-LIST] rule
@@ -674,14 +675,14 @@ def list_select_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation)
 # [LIST-ASSIGN-STMT]
 # O, R |- e1[e2] = e3
 def list_assign_stmt_rule(o: LocalEnvironment, r: Type, e1: Operation, e3: Operation):
-    t1 = check_expr(o, r, e1)
+    list_t1 = check_expr(o, r, e1)
 
     e2 = e1.index.op
     check_type(check_expr(o, r, e2), expected=int_type)
 
     t3 = check_expr(o, r, e3)
 
-    check_assignment_compatibility(t3, t1)
+    check_assignment_compatibility(t3, list_t1.elem_type)
 
 
 
