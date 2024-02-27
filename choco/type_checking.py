@@ -307,9 +307,12 @@ def check_stmt_or_def(o: LocalEnvironment, r: Type, op: Operation):
     elif isinstance(op, choco_ast.If):
         cond = op.cond.op
         then = op.then.op
-        orelse = op.orelse.op
+        or_else = None
 
-        return if_else_rule(o, r, cond, then, orelse)
+        if op.orelse.block.first_op:
+            or_else = op.orelse.op
+
+        return if_else_rule(o, r, cond, then, or_else)
     elif isinstance(op, choco_ast.While):
         cond = op.cond.op
         body = op.body.op
@@ -730,7 +733,8 @@ def multi_assign_stmt(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation
 def if_else_rule(o: LocalEnvironment, r: Type, cond: Operation, then: Operation, or_else: Operation):
     check_type(check_expr(o, r, cond), expected=bool_type)
     check_stmt_or_def(o, r, then)
-    check_stmt_or_def(o, r, or_else)
+    if or_else:
+        check_stmt_or_def(o, r, or_else)
 
 # [WHILE]
 # O, R |- while e: b
