@@ -669,9 +669,17 @@ def multi_assign_stmt(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation
         exit(0)
 
     for expr in list_expr:
-        check_expr(o, r, expr)
-        id = expr.id.data
-        var_assign_stmt_rule(o, r, id, e0)
+        if isinstance(expr, choco_ast.ExprName):
+            check_expr(o, r, expr)
+            id = expr.id.data
+            var_assign_stmt_rule(o, r, id, e0)
+        elif isinstance(expr, choco_ast.IndexExpr):
+            e1 = expr.value.op
+            e2 = expr.index.op
+            list_assign_stmt_rule(o, r, e1, e2, e0)
+        else:
+            print("Semantic error:")
+            exit(0)
 
 
 # [INVOKE]
