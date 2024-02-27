@@ -319,7 +319,7 @@ def check_stmt_or_def(o: LocalEnvironment, r: Type, op: Operation):
         id = op.iter_name.data
         body = op.body.op
         if isinstance(e, choco_ast.StringAttr):
-            return for_list_rule(o, r, id, e, body)
+            return for_str_rule(o, r, id, e, body)
         elif isinstance(e, choco_ast.ListExpr):
             return for_list_rule(o, r, id, e, body)
         else:
@@ -729,31 +729,30 @@ def multi_assign_stmt(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation
 # O, R |- if e: b1 else: b2
 def if_else_rule(o: LocalEnvironment, r: Type, cond: Operation, then: Operation, or_else: Operation):
     check_type(check_expr(o, r, cond), expected=bool_type)
-    check_expr(o, r, then)
-    check_expr(o, r, or_else)
+    check_stmt_or_def(o, r, then)
+    check_stmt_or_def(o, r, or_else)
 
 # [WHILE]
 # O, R |- while e: b
 def while_rule(o: LocalEnvironment, r: Type, cond: Operation, block: Operation):
     check_type(check_expr(o, r, cond), expected=bool_type)
-    check_expr(o, r, block)
+    check_stmt_or_def(o, r, block)
 
 # [FOR-STR]
 # O, R |- for id in e: b
 def for_str_rule(o: LocalEnvironment, r: Type, id: str, e: Operation, b: Operation):
     t = o[id]
-    check_type(check_expr(o, r, e), expected=str_type)
+    check_expr(o, r, e)
     check_assignment_compatibility(str_type, t)
-    check_expr(o, r, b)
+    check_stmt_or_def(o, r, b)
 
 # [FOR-LIST]
 # O, R |- for id in e: b
 def for_list_rule(o: LocalEnvironment, r: Type, id: str, e: Operation, b: Operation):
     t = o[id]
     list_t1 = check_expr(o, r, e)
-    check_type(list_t1, expected=ListType)
     check_assignment_compatibility(list_t1.elem_type, t)
-    check_expr(o, r, b)
+    check_stmt_or_def(o, r, b)
 
 
 
