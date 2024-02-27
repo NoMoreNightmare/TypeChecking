@@ -674,6 +674,7 @@ def multi_assign_stmt(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation
             id = expr.id.data
             var_assign_stmt_rule(o, r, id, e0)
         elif isinstance(expr, choco_ast.IndexExpr):
+            check_expr(o, r, expr)
             e1 = expr.value.op
             e2 = expr.index.op
             list_assign_stmt_rule(o, r, e1, e2, e0)
