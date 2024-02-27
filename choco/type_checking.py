@@ -336,11 +336,9 @@ def check_stmt_or_def(o: LocalEnvironment, r: Type, op: Operation):
             print("Semantic error:")
             exit(0)
     elif isinstance(op, choco_ast.GlobalDecl):
-        raise Exception("Support for choco_ast.GlobalDecl not implemented yet")
+        return
     elif isinstance(op, choco_ast.NonLocalDecl):
-        raise Exception(
-            "Support for choco_ast.NonLocalDecl not implemented yet"
-        )
+        return
     elif isinstance(op, choco_ast.FuncDef):
 
         func_name = op.func_name.data
@@ -350,7 +348,7 @@ def check_stmt_or_def(o: LocalEnvironment, r: Type, op: Operation):
         # if op.params.block.first_op:
         #     params = op.params.op
         if op.func_body.block.first_op:
-            func_body = op.func_body.op
+            func_body = op.func_body.ops
         if op.return_type.block.first_op:
             return_type = op.return_type.op
 
@@ -804,7 +802,6 @@ def for_list_rule(o: LocalEnvironment, r: Type, id: str, e: Operation, b: Operat
 # [FUNC-DEF] rule
 # O, R |- def f(x1:T1, ... , xn:Tn)  [[-> T0]]? :b
 def func_def_rule(o: LocalEnvironment, r: Type, func_name: str, func_body: Operation, return_type: Operation):
-    print('1111')
     func = o[func_name]
     O: LocalEnvironment = {
         "len": FunctionInfo(FunctionType([object_type], int_type), ["arg"], []),
@@ -833,4 +830,5 @@ def func_def_rule(o: LocalEnvironment, r: Type, func_name: str, func_body: Opera
             O.update({i[0]: i[1]})
 
     if func_body:
-        check_stmt_or_def(O, t, func_body)
+        for stmt_or_expr in func_body:
+            check_stmt_or_def(O, t, stmt_or_expr)
