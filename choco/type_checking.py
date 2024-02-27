@@ -581,7 +581,8 @@ def is_rule(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation) -> Type:
     if t1 not in [int_type, bool_type, str_type] and t2 not in [int_type, bool_type, str_type]:
         return bool_type
     else:
-        raise Exception("Semantic Error:")
+        print("Semantic error:")
+        exit(0)
 
 
 # [LIST-DISPLAY]
