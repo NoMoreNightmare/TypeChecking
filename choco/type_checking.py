@@ -305,11 +305,26 @@ def check_stmt_or_def(o: LocalEnvironment, r: Type, op: Operation):
     elif isinstance(op, choco_ast.Return):
         raise Exception("Support for choco_ast.Return not implemented yet")
     elif isinstance(op, choco_ast.If):
-        raise Exception("Support for choco_ast.If not implemented yet")
+        cond = op.cond.op
+        then = op.then.op
+        orelse = op.orelse.op
+
+        return if_else_rule(o, r, cond, then, orelse)
     elif isinstance(op, choco_ast.While):
-        raise Exception("Support for choco_ast.While not implemented yet")
+        cond = op.cond.op
+        body = op.body.op
+        return while_rule(o, r, cond, body)
     elif isinstance(op, choco_ast.For):
-        raise Exception("Support for choco_ast.For not implemented yet")
+        e = op.iter.op
+        id = op.iter_name.data
+        body = op.body.op
+        if isinstance(e, choco_ast.StringAttr):
+            return for_list_rule(o, r, id, e, body)
+        elif isinstance(e, choco_ast.ListExpr):
+            return for_list_rule(o, r, id, e, body)
+        else:
+            print("Semantic error:")
+            exit(0)
     elif isinstance(op, choco_ast.GlobalDecl):
         raise Exception("Support for choco_ast.GlobalDecl not implemented yet")
     elif isinstance(op, choco_ast.NonLocalDecl):
