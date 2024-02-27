@@ -431,10 +431,12 @@ def check_expr(o: LocalEnvironment, r: Type, op: Operation) -> Type:
         elif not op.elems.blocks[0].is_empty:
             t = list_display_rule(o, r, op)
         else:
-            raise Exception("???")
+            print("Semantic error:")
+            exit(0)
 
     elif isinstance(op, choco_ast.CallExpr):
-        raise Exception("Support for choco_ast.CallExpr not implemented yet")
+        t = invoke_rule(o, r, op)
+
 
     if not isinstance(t, Type):
         print("Semantic error:")
@@ -738,8 +740,15 @@ def multi_assign_stmt(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation
 
 # [INVOKE]
 # O, R |- f(e1, e2, ..., en): T0
-# def invoke_rule(o: LocalEnvironment, r: Type, ???) -> Type:
-#     ???
+def invoke_rule(o: LocalEnvironment, r: Type, op: Operation) -> Type:
+    func = o[op.func.data]
+    i = 0
+    for param in op.args.ops:
+        current_type = check_expr(o, r, param)
+        check_assignment_compatibility(current_type, func.func_type.inputs[i])
+        i = i + 1
+
+    return func.func_type.output
 
 # [RETURN-e] rule
 # O, R |- return e
