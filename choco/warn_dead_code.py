@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from enum import Enum
 from io import StringIO
 
 from xdsl.dialects.builtin import ModuleOp
@@ -6,7 +7,7 @@ from xdsl.ir import MLContext
 from xdsl.passes import ModulePass
 from xdsl.printer import Printer
 
-from choco.ast_visitor import Visitor
+from choco.ast_visitor import Visitor, Status
 from choco.dialects.choco_ast import *
 
 
@@ -101,9 +102,18 @@ class WarnDeadCode(ModulePass):
         # if some dead code was found.
         visitor = Visitor()
         visitor.traverse(program)
-        # dictions = visitor.get_dictionaries()
+        dictionaries = visitor.get_dictionaries()
 
-
+        keys = dictionaries.keys()
+        for key in keys:
+            status = dictionaries.get(key)
+            if status[1] == Status.ASSIGN_NOT_USED:
+                print("[Warning] Dead code found: The following store operation is unused:")
+                print(status[0])
+                exit(0)
+            elif status[1] == Status.INIT_NOT_USED:
+                print(" [Warning] Dead code found: The following variable is unused: " + key + ".")
+                exit(0)
 
 
         # exit(0)
