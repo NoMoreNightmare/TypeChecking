@@ -111,5 +111,8 @@ class WarnDeadCode(ModulePass):
             elif status[1] == Status.INIT_NOT_USED:
                 error = UnusedVariableError(key)
                 raise error
+            elif status[1] == Status.FUNC_NOT_USED:
+                error = UnusedFunctionError(key)
+                raise error
 
         # exit(0)

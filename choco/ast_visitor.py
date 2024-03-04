@@ -44,6 +44,8 @@ class VisitorError:
     dictionaries = {}
     unreachable_return_or_pass = False
 
+    func_dictionaries = {}
+
     def traverse(self, operation: Operation):
         class_name = camel_to_snake(type(operation).__name__)
 
@@ -63,6 +65,12 @@ class VisitorError:
 
     def traverse_func_def(self, operation):
         self.unreachable_return_or_pass = False
+        self.dictionaries.update({operation.func_name.data: (operation, Status.FUNC_NOT_USED)})
+        params = operation.params.ops
+        params_dictionary = {}
+        for param in params:
+            params_dictionary.update({param.var_name.data: Status.PARAM_NOT_USED})
+
         for r in operation.regions:
             for b in r.blocks:
                 for op in b.ops:
@@ -76,7 +84,24 @@ class VisitorError:
                         else:
                             self.unreachable_return_or_pass = True
                     else:
-                        self.traverse(op)
+                        params_dictionary = self.traverse_func_def_helper(op, params_dictionary)
+
+        params = params_dictionary.keys()
+
+        for key in params:
+            if params_dictionary.get(key) == Status.PARAM_NOT_USED:
+                print("[Warning] Dead code found: The following function argument is unused: " + key + ".")
+                exit(0)
+
+    def traverse_func_def_helper(self, operation, params_dictionary):
+        for r in operation.regions:
+            for b in r.blocks:
+                for op in b.ops:
+                    if isinstance(op, ExprName):
+                        params_dictionary.update({op.id.data: Status.PARAM_USED})
+                    else:
+                        params_dictionary = self.traverse_func_def_helper(op, params_dictionary)
+        return params_dictionary
 
     def traverse_if(self, operation):
         cond = operation.cond.op
@@ -161,11 +186,24 @@ class VisitorError:
             elif status[1] == Status.ASSIGN_NOT_USED:
                 self.dictionaries.update({operation.id.data: (operation, Status.ASSIGN_USED)})
 
+    def traverse_call_expr(self, operation):
+        name = operation.func.data
+        status = (operation, Status.FUNC_USED)
+
+        self.dictionaries.update({name: status})
+
     def get_dictionaries(self):
         return self.dictionaries
+
 
 class Status(Enum):
     INIT_NOT_USED = 1
     INIT_USED = 2
     ASSIGN_NOT_USED = 3
     ASSIGN_USED = 4
+
+    FUNC_NOT_USED = 6
+    FUNC_USED = 7
+
+    PARAM_NOT_USED = 8
+    PARAM_USED = 9
