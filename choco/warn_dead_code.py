@@ -92,8 +92,18 @@ class WarnDeadCode(ModulePass):
     name = "warn-dead-code"
 
     def apply(self, ctx: MLContext, op: ModuleOp) -> None:
+
         program = op.ops.first
         assert isinstance(program, Program)
 
+
         # TODO: check for dead code in `program`, and raise the corresponding exception
         # if some dead code was found.
+        visitor = Visitor()
+        visitor.traverse(program)
+        # dictions = visitor.get_dictionaries()
+
+
+
+
+        # exit(0)

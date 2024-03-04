@@ -21,6 +21,9 @@ def get_method(instance: object, method: str) -> Optional[Callable[..., Any]]:
 
 
 class Visitor:
+    dictionaries = {}
+    unreachable_return_or_pass = False
+
     def traverse(self, operation: Operation):
         class_name = camel_to_snake(type(operation).__name__)
 
@@ -36,3 +39,83 @@ class Visitor:
         visit = get_method(self, f"visit_{class_name}")
         if visit:
             visit(operation)
+
+    def traverse_func_def(self, operation):
+        self.unreachable_return_or_pass = False
+        for r in operation.regions:
+            for b in r.blocks:
+                for op in b.ops:
+                    # self.traverse(op)
+                    if isinstance(op, FuncDef):
+                        self.unreachable_return_or_pass = False
+                    elif isinstance(op, Return) or isinstance(op, Pass):
+                        if self.unreachable_return_or_pass:
+                            print("[Warning] Dead code found: Program contains unreachable statements.")
+                            exit(0)
+                        else:
+                            self.unreachable_return_or_pass = True
+                    else:
+                        self.traverse(op)
+
+    def traverse_if(self, operation):
+        cond = operation.cond.op
+        if isinstance(cond, Literal):
+            if not cond.value.data:
+                print("[Warning] Dead code found: Program contains unreachable statements.")
+                exit(0)
+            else:
+                if operation.orelse.block.first_op:
+                    print("[Warning] Dead code found: Program contains unreachable statements.")
+                    exit(0)
+
+
+        for r in operation.regions:
+            for b in r.blocks:
+                for op in b.ops:
+                    self.traverse(op)
+
+    def traverse_if_expr(self, operation):
+        cond = operation.cond.op
+        if isinstance(cond, Literal):
+            print("[Warning] Dead code found: Program contains unreachable statements.")
+            exit(0)
+
+        for r in operation.regions:
+            for b in r.blocks:
+                for op in b.ops:
+                    self.traverse(op)
+
+    def traverse_while(self, operation):
+        cond = operation.cond.op
+        if isinstance(cond, Literal):
+            print("[Warning] Dead code found: Program contains unreachable statements.")
+            exit(0)
+
+        for r in operation.regions:
+            for b in r.blocks:
+                for op in b.ops:
+                    self.traverse(op)
+
+    def traverse_binary_expr(self, operation: BinaryExpr):
+        binary_op = operation.op.data
+        if binary_op == "or":
+            lhs = operation.lhs.op
+            if isinstance(lhs, Literal):
+                if lhs.value.data:
+                    print("[Warning] Dead code found: Program contains unreachable statements.")
+                    exit(0)
+
+        elif binary_op == "and":
+            lhs = operation.lhs.op
+            if isinstance(lhs, Literal):
+                if not lhs.value.data:
+                    print("[Warning] Dead code found: Program contains unreachable statements.")
+                    exit(0)
+
+        for r in operation.regions:
+            for b in r.blocks:
+                for op in b.ops:
+                    self.traverse(op)
+
+    def get_dictionaries(self):
+        return self.dictionaries

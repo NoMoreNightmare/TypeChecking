@@ -13,6 +13,7 @@ from xdsl.passes import ModulePass
 from choco.ast_visitor import Visitor
 from choco.dialects import choco_ast, choco_type
 from choco.semantic_error import SemanticError
+from choco.warn_dead_code import WarnDeadCode
 
 
 class Type(ABC):
@@ -203,6 +204,11 @@ class TypeChecking(ModulePass):
     name = "type-checking"
 
     def apply(self, ctx: MLContext, op: ModuleOp) -> None:
+        warn = WarnDeadCode()
+        warn.apply(ctx, op)
+
+
+
         o = build_env(op)
         r = bottom_type
 
@@ -302,7 +308,6 @@ def check_stmt_or_def(o: LocalEnvironment, r: Type, op: Operation):
         else:
             print("Semantic error:")
             exit(0)
-
 
     elif isinstance(op, choco_ast.Pass):
         return pass_rule(o, r)
@@ -741,7 +746,6 @@ def multi_assign_stmt(o: LocalEnvironment, r: Type, e1: Operation, e2: Operation
 # [INVOKE]
 # O, R |- f(e1, e2, ..., en): T0
 def invoke_rule(o: LocalEnvironment, r: Type, op: Operation) -> Type:
-    print('2222')
     func = o[op.func.data]
     i = 0
     for param in op.args.ops:
