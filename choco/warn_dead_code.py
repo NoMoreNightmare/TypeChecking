@@ -107,11 +107,9 @@ class WarnDeadCode(ModulePass):
             status = dictionaries.get(key)
             if status[1] == Status.ASSIGN_NOT_USED:
                 error = UnusedStoreError(status[0])
-                print(error.__str__())
-                exit(0)
+                raise error
             elif status[1] == Status.INIT_NOT_USED:
                 error = UnusedVariableError(key)
-                print(error.__str__())
-                exit(0)
+                raise error
 
         # exit(0)
