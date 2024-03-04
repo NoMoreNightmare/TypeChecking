@@ -204,10 +204,6 @@ class TypeChecking(ModulePass):
     name = "type-checking"
 
     def apply(self, ctx: MLContext, op: ModuleOp) -> None:
-        warn = WarnDeadCode()
-        warn.apply(ctx, op)
-
-
 
         o = build_env(op)
         r = bottom_type
@@ -220,6 +216,9 @@ class TypeChecking(ModulePass):
         stmts = list(program.stmts.ops)
         if len(stmts) >= 1:
             check_stmt_or_def_list(o, r, stmts)
+
+        warn = WarnDeadCode()
+        warn.apply(ctx, op)
 
 
 # Build local environments

@@ -97,9 +97,7 @@ class WarnDeadCode(ModulePass):
         program = op.ops.first
         assert isinstance(program, Program)
 
-
         # TODO: check for dead code in `program`, and raise the corresponding exception
-        # if some dead code was found.
         visitor = Visitor()
         visitor.traverse(program)
         dictionaries = visitor.get_dictionaries()
@@ -108,12 +106,12 @@ class WarnDeadCode(ModulePass):
         for key in keys:
             status = dictionaries.get(key)
             if status[1] == Status.ASSIGN_NOT_USED:
-                print("[Warning] Dead code found: The following store operation is unused:")
-                print(status[0])
+                error = UnusedStoreError(status[0])
+                print(error.__str__())
                 exit(0)
             elif status[1] == Status.INIT_NOT_USED:
-                print(" [Warning] Dead code found: The following variable is unused: " + key + ".")
+                error = UnusedVariableError(key)
+                print(error.__str__())
                 exit(0)
-
 
         # exit(0)
