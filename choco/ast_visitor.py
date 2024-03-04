@@ -166,6 +166,10 @@ class VisitorError:
     def traverse_typed_var(self, operation: TypedVar):
         if not isinstance(operation.type.op, ListType):
             self.dictionaries.update({operation.var_name.data: (operation, Status.INIT_NOT_USED)})
+        for r in operation.regions:
+            for b in r.blocks:
+                for op in b.ops:
+                    self.traverse(op)
 
     def traverse_assign(self, operation: Assign):
         self.traverse(operation.value.op)
@@ -179,6 +183,10 @@ class VisitorError:
                 exit(0)
             else:
                 self.dictionaries.update({name: (operation, Status.ASSIGN_NOT_USED)})
+        for r in operation.regions:
+            for b in r.blocks:
+                for op in b.ops:
+                    self.traverse(op)
 
     def traverse_expr_name(self, operation):
         if isinstance(operation, ExprName):
@@ -187,12 +195,21 @@ class VisitorError:
                 self.dictionaries.update({operation.id.data: (operation, Status.INIT_USED)})
             elif status[1] == Status.ASSIGN_NOT_USED:
                 self.dictionaries.update({operation.id.data: (operation, Status.ASSIGN_USED)})
+        for r in operation.regions:
+            for b in r.blocks:
+                for op in b.ops:
+                    self.traverse(op)
 
     def traverse_call_expr(self, operation):
         name = operation.func.data
         status = (operation, Status.FUNC_USED)
 
         self.dictionaries.update({name: status})
+        for r in operation.regions:
+            for b in r.blocks:
+                for op in b.ops:
+                    self.traverse(op)
+
 
     def get_dictionaries(self):
         return self.dictionaries
