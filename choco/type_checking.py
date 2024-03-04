@@ -217,8 +217,8 @@ class TypeChecking(ModulePass):
         if len(stmts) >= 1:
             check_stmt_or_def_list(o, r, stmts)
 
-        warn = WarnDeadCode()
-        warn.apply(ctx, op)
+        # warn = WarnDeadCode()
+        # warn.apply(ctx, op)
 
 
 # Build local environments
