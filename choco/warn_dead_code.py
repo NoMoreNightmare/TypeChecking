@@ -7,7 +7,7 @@ from xdsl.ir import MLContext
 from xdsl.passes import ModulePass
 from xdsl.printer import Printer
 
-from choco.ast_visitor import Visitor, Status
+from choco.ast_visitor import Visitor, Status, VisitorError
 from choco.dialects.choco_ast import *
 
 
@@ -98,7 +98,7 @@ class WarnDeadCode(ModulePass):
         assert isinstance(program, Program)
 
         # TODO: check for dead code in `program`, and raise the corresponding exception
-        visitor = Visitor()
+        visitor = VisitorError()
         visitor.traverse(program)
         dictionaries = visitor.get_dictionaries()
 

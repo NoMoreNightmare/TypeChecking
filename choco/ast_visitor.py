@@ -22,6 +22,25 @@ def get_method(instance: object, method: str) -> Optional[Callable[..., Any]]:
 
 
 class Visitor:
+    def traverse(self, operation: Operation):
+        class_name = camel_to_snake(type(operation).__name__)
+
+        traverse = get_method(self, f"traverse_{class_name}")
+
+        if traverse:
+            traverse(operation)
+        else:
+            for r in operation.regions:
+                for b in r.blocks:
+                    for op in b.ops:
+                        self.traverse(op)
+
+        visit = get_method(self, f"visit_{class_name}")
+        if visit:
+            visit(operation)
+
+
+class VisitorError:
     dictionaries = {}
     unreachable_return_or_pass = False
 
@@ -37,7 +56,6 @@ class Visitor:
                 for b in r.blocks:
                     for op in b.ops:
                         self.traverse(op)
-
 
         visit = get_method(self, f"visit_{class_name}")
         if visit:
@@ -145,7 +163,6 @@ class Visitor:
 
     def get_dictionaries(self):
         return self.dictionaries
-
 
 class Status(Enum):
     INIT_NOT_USED = 1
