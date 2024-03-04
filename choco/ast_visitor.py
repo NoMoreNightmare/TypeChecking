@@ -77,7 +77,7 @@ class Visitor:
     def traverse_if_expr(self, operation):
         cond = operation.cond.op
         if isinstance(cond, Literal):
-            print("[Warning] Dead code found: Program contains unreachable statements.")
+            print("[Warning] Dead code found: Program contains unreachable expressions.")
             exit(0)
 
         for r in operation.regions:
@@ -102,14 +102,14 @@ class Visitor:
             lhs = operation.lhs.op
             if isinstance(lhs, Literal):
                 if lhs.value.data:
-                    print("[Warning] Dead code found: Program contains unreachable statements.")
+                    print("[Warning] Dead code found: Program contains unreachable expressions.")
                     exit(0)
 
         elif binary_op == "and":
             lhs = operation.lhs.op
             if isinstance(lhs, Literal):
                 if not lhs.value.data:
-                    print("[Warning] Dead code found: Program contains unreachable statements.")
+                    print("[Warning] Dead code found: Program contains unreachable expressions.")
                     exit(0)
 
         for r in operation.regions:
