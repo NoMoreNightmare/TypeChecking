@@ -78,6 +78,8 @@ class VisitorError:
         for param in params:
             params_dictionary.update({param.var_name.data: Status.PARAM_NOT_USED})
 
+
+
         for r in operation.regions:
             for b in r.blocks:
                 for op in b.ops:
@@ -98,6 +100,8 @@ class VisitorError:
                         exit(0)
                     else:
                         params_dictionary = self.traverse_func_def_helper(op, params_dictionary)
+                    self.traverse(op)
+
 
         params = params_dictionary.keys()
 
@@ -114,6 +118,7 @@ class VisitorError:
                         params_dictionary.update({op.id.data: Status.PARAM_USED})
                     else:
                         params_dictionary = self.traverse_func_def_helper(op, params_dictionary)
+                    # self.traverse(op)
         return params_dictionary
 
     def traverse_if(self, operation):
