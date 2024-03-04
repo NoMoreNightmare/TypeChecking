@@ -51,12 +51,19 @@ class VisitorError:
 
         traverse = get_method(self, f"traverse_{class_name}")
 
+
         if traverse:
             traverse(operation)
         else:
             for r in operation.regions:
                 for b in r.blocks:
                     for op in b.ops:
+                        if isinstance(operation, Program):
+                            if isinstance(op, BinaryExpr) or isinstance(op, UnaryExpr) \
+                                    or isinstance(op, IndexExpr) or isinstance(op, ListExpr) or isinstance(op, Literal):
+                                print("[Warning] Dead code found: The following expression is unused:")
+                                print(op)
+                                exit(0)
                         self.traverse(op)
 
         visit = get_method(self, f"visit_{class_name}")
@@ -84,6 +91,11 @@ class VisitorError:
                         else:
                             params_dictionary = self.traverse_func_def_helper(op, params_dictionary)
                             self.unreachable_return_or_pass = True
+                    elif isinstance(op, BinaryExpr) or isinstance(op, UnaryExpr) \
+                            or isinstance(op, IndexExpr) or isinstance(op, ListExpr) or isinstance(op, Literal):
+                        print("[Warning] Dead code found: The following expression is unused:")
+                        print(op)
+                        exit(0)
                     else:
                         params_dictionary = self.traverse_func_def_helper(op, params_dictionary)
 
@@ -115,6 +127,23 @@ class VisitorError:
                     print("[Warning] Dead code found: Program contains unreachable statements.")
                     exit(0)
 
+        orelse = operation.orelse.ops
+        if operation.orelse.block.first_op:
+            for op in orelse:
+                if isinstance(op, BinaryExpr) or isinstance(op, UnaryExpr) \
+                        or isinstance(op, IndexExpr) or isinstance(op, ListExpr) or isinstance(op, Literal):
+                    print("[Warning] Dead code found: The following expression is unused:")
+                    print(op)
+                    exit(0)
+
+        then = operation.then.ops
+        for op in then:
+            if isinstance(op, BinaryExpr) or isinstance(op, UnaryExpr) \
+                    or isinstance(op, IndexExpr) or isinstance(op, ListExpr) or isinstance(op, Literal):
+                print("[Warning] Dead code found: The following expression is unused:")
+                print(op)
+                exit(0)
+
         for r in operation.regions:
             for b in r.blocks:
                 for op in b.ops:
@@ -126,6 +155,23 @@ class VisitorError:
             print("[Warning] Dead code found: Program contains unreachable expressions.")
             exit(0)
 
+        orelse = operation.orelse.ops
+        if operation.orelse.block.first_op:
+            for op in orelse:
+                if isinstance(op, BinaryExpr) or isinstance(op, UnaryExpr) \
+                        or isinstance(op, IndexExpr) or isinstance(op, ListExpr) or isinstance(op, Literal):
+                    print("[Warning] Dead code found: The following expression is unused:")
+                    print(op)
+                    exit(0)
+
+        then = operation.then.ops
+        for op in then:
+            if isinstance(op, BinaryExpr) or isinstance(op, UnaryExpr) \
+                    or isinstance(op, IndexExpr) or isinstance(op, ListExpr) or isinstance(op, Literal):
+                print("[Warning] Dead code found: The following expression is unused:")
+                print(op)
+                exit(0)
+
         for r in operation.regions:
             for b in r.blocks:
                 for op in b.ops:
@@ -136,6 +182,15 @@ class VisitorError:
         if isinstance(cond, Literal):
             print("[Warning] Dead code found: Program contains unreachable statements.")
             exit(0)
+
+        body = operation.body.ops
+        if operation.orelse.block.first_op:
+            for op in body:
+                if isinstance(op, BinaryExpr) or isinstance(op, UnaryExpr) \
+                        or isinstance(op, IndexExpr) or isinstance(op, ListExpr) or isinstance(op, Literal):
+                    print("[Warning] Dead code found: The following expression is unused:")
+                    print(op)
+                    exit(0)
 
         for r in operation.regions:
             for b in r.blocks:
@@ -183,7 +238,6 @@ class VisitorError:
             else:
                 self.dictionaries.update({name: (operation, Status.ASSIGN_NOT_USED)})
 
-
     def traverse_expr_name(self, operation):
         if isinstance(operation, ExprName):
             status = self.dictionaries.get(operation.id.data)
@@ -205,7 +259,6 @@ class VisitorError:
             for b in r.blocks:
                 for op in b.ops:
                     self.traverse(op)
-
 
     def get_dictionaries(self):
         return self.dictionaries
