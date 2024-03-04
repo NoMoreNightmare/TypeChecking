@@ -82,6 +82,7 @@ class VisitorError:
                             print("[Warning] Dead code found: Program contains unreachable statements.")
                             exit(0)
                         else:
+                            params_dictionary = self.traverse_func_def_helper(op, params_dictionary)
                             self.unreachable_return_or_pass = True
                     else:
                         params_dictionary = self.traverse_func_def_helper(op, params_dictionary)
@@ -97,6 +98,7 @@ class VisitorError:
         for r in operation.regions:
             for b in r.blocks:
                 for op in b.ops:
+                    print(op)
                     if isinstance(op, ExprName):
                         params_dictionary.update({op.id.data: Status.PARAM_USED})
                     else:
