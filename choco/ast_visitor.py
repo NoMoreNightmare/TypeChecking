@@ -98,7 +98,6 @@ class VisitorError:
         for r in operation.regions:
             for b in r.blocks:
                 for op in b.ops:
-                    print(op)
                     if isinstance(op, ExprName):
                         params_dictionary.update({op.id.data: Status.PARAM_USED})
                     else:
@@ -183,10 +182,7 @@ class VisitorError:
                 exit(0)
             else:
                 self.dictionaries.update({name: (operation, Status.ASSIGN_NOT_USED)})
-        for r in operation.regions:
-            for b in r.blocks:
-                for op in b.ops:
-                    self.traverse(op)
+
 
     def traverse_expr_name(self, operation):
         if isinstance(operation, ExprName):
