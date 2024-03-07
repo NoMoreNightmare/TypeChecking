@@ -318,9 +318,14 @@ class VisitorError:
                 print("[Warning] Dead code found: Program contains unreachable statements.")
                 exit(0)
             else:
-                if operation.orelse.block.first_op:
-                    print("[Warning] Dead code found: Program contains unreachable statements.")
-                    exit(0)
+                if isinstance(operation, If):
+                    if operation.orelse.block.first_op:
+                        print("[Warning] Dead code found: Program contains unreachable statements.")
+                        exit(0)
+                elif isinstance(operation, IfExpr):
+                    if operation.or_else.block.first_op:
+                        print("[Warning] Dead code found: Program contains unreachable statements.")
+                        exit(0)
         elif isinstance(cond, ExprName):
             id = cond.id.data
             status = self.dictionaries.get(id)
