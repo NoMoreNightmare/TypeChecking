@@ -210,6 +210,8 @@ class VisitorError:
         typed_var = operation.typed_var.op
         if not isinstance(typed_var.type.op, ListType):
             self.dictionaries.update({typed_var.var_name.data: (operation, Status.INIT_NOT_USED)})
+        else:
+            self.dictionaries.update({typed_var.var_name.data: (operation, Status.INIT_NOT_USED)})
         for r in operation.regions:
             for b in r.blocks:
                 for op in b.ops:
@@ -229,7 +231,16 @@ class VisitorError:
         if isinstance(target, ExprName):
             name = target.id.data
             status = self.dictionaries.get(name)
-            if status[1] == Status.ASSIGN_NOT_USED:
+            if status[1] == Status.ASSIGN_NOT_USED or status[1] == Status.INIT_NOT_USED:
+                print("[Warning] Dead code found: The following store operation is unused:")
+                print(status[0])
+                exit(0)
+            else:
+                self.dictionaries.update({name: (operation, Status.ASSIGN_NOT_USED)})
+        elif isinstance(target, IndexExpr):
+            name = target.value.op.id.data
+            status = self.dictionaries.get(name)
+            if status[1] == Status.ASSIGN_NOT_USED or status[1] == Status.INIT_NOT_USED:
                 print("[Warning] Dead code found: The following store operation is unused:")
                 print(status[0])
                 exit(0)
@@ -307,6 +318,18 @@ class VisitorError:
                 value = self.get_literal_value(expr)
                 res = eval(op + " " + str(value))
             return res
+
+    def traverse_index_expr(self, operation:IndexExpr):
+        name = operation.value.op.id.data
+        status = self.dictionaries.get(name)
+        if status[1] == Status.INIT_NOT_USED:
+            self.dictionaries.update({name: (operation, Status.INIT_USED)})
+        elif status[1] == Status.ASSIGN_NOT_USED:
+            self.dictionaries.update({name: (operation, Status.ASSIGN_USED)})
+        for r in operation.regions:
+            for b in r.blocks:
+                for op in b.ops:
+                    self.traverse(op)
 
 
     def get_dictionaries(self):
