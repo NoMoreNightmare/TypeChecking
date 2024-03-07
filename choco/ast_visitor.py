@@ -26,6 +26,7 @@ class Visitor:
         class_name = camel_to_snake(type(operation).__name__)
 
         traverse = get_method(self, f"traverse_{class_name}")
+        # print(class_name)
 
         if traverse:
             traverse(operation)
@@ -257,6 +258,14 @@ class VisitorError:
             for b in r.blocks:
                 for op in b.ops:
                     self.traverse(op)
+
+    # def traverse_typed_var(self, operation: TypedVar):
+    #     if not isinstance(operation.type.op, ListType):
+    #         self.dictionaries.update({operation.var_name.data: (operation, Status.INIT_NOT_USED)})
+    #     for r in operation.regions:
+    #         for b in r.blocks:
+    #             for op in b.ops:
+    #                 self.traverse(op)
 
     def traverse_assign(self, operation: Assign):
         self.traverse(operation.value.op)

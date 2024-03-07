@@ -100,6 +100,7 @@ class WarnDeadCode(ModulePass):
         # TODO: check for dead code in `program`, and raise the corresponding exception
         visitor = VisitorError()
         visitor.traverse(program)
+
         dictionaries = visitor.get_dictionaries()
 
         keys = dictionaries.keys()
