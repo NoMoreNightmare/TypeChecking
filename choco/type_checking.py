@@ -387,21 +387,30 @@ def check_expr(o: LocalEnvironment, r: Type, op: Operation) -> Type:
             t = is_rule(o, r, lhs, rhs)
         elif binary_op in ["<", ">", "<=", ">=", "==", "!="]:
             if binary_op in ["==", "!="]:
-                if type(lhs.properties.get('value')) == choco_ast.BoolAttr:
+                if isinstance(lhs, choco_ast.BoolAttr):
                     t = bool_compare_rule(o, r, lhs, rhs)
-                elif type(lhs.properties.get('value')) == choco_ast.IntegerAttr:
+                elif isinstance(lhs, choco_ast.IntegerAttr):
                     t = int_compare_rule(o, r, lhs, rhs)
-                elif type(lhs.properties.get('value')) == choco_ast.StringAttr:
+                elif isinstance(lhs, choco_ast.StringAttr):
                     t = str_compare_rule(o, r, lhs, rhs)
+                elif isinstance(lhs, choco_ast.ExprName):
+                    variable_name = lhs.id.data
+                    value = o[variable_name]
+                    if value == int_type:
+                        t = int_compare_rule(o, r, lhs, rhs)
+                    elif value == bool_type:
+                        t = bool_compare_rule(o, r, lhs, rhs)
+                    elif value == str_type:
+                        t = str_compare_rule(o, r, lhs, rhs)
             else:
                 t = int_compare_rule(o, r, lhs, rhs)
         elif binary_op in ["+", "-", "*", "//", "%"]:
             if binary_op == "+":
-                if type(lhs.properties.get('value')) == choco_ast.IntegerAttr:
+                if isinstance(lhs, choco_ast.IntegerAttr):
                     t = arith_rule(o, r, lhs, rhs)
                 elif isinstance(lhs, choco_ast.ListExpr) and isinstance(rhs, choco_ast.ListExpr):
                     t = list_concat_rule(o, r, lhs, rhs)
-                elif type(lhs.properties.get('value')) == choco_ast.StringAttr:
+                elif isinstance(lhs, choco_ast.StringAttr):
                     t = str_concat_rule(o, r, lhs, rhs)
             else:
                 t = arith_rule(o, r, lhs, rhs)

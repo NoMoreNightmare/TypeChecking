@@ -131,6 +131,33 @@ class VisitorError:
                 if operation.orelse.block.first_op:
                     print("[Warning] Dead code found: Program contains unreachable statements.")
                     exit(0)
+        elif isinstance(cond, ExprName):
+            id = cond.id.data
+            status = self.dictionaries.get(id)
+            variable_assign_or_init_op = status[0]
+            if isinstance(variable_assign_or_init_op, VarDef):
+                value = variable_assign_or_init_op.literal.op.value.data
+                if not value:
+                    print("[Warning] Dead code found: Program contains unreachable statements.")
+                    exit(0)
+                else:
+                    if operation.orelse.block.first_op:
+                        print("[Warning] Dead code found: Program contains unreachable statements.")
+                        exit(0)
+            elif isinstance(variable_assign_or_init_op, Assign):
+                value = variable_assign_or_init_op.value.op.value.data
+                if not value:
+                    print("[Warning] Dead code found: Program contains unreachable statements.")
+                    exit(0)
+                else:
+                    if operation.orelse.block.first_op:
+                        print("[Warning] Dead code found: Program contains unreachable statements.")
+                        exit(0)
+        elif isinstance(cond, BinaryExpr):
+            print(cond.op.data)
+            exit(0)
+        elif isinstance(cond, UnaryExpr):
+            exit(0)
 
         orelse = operation.orelse.ops
         if operation.orelse.block.first_op:
@@ -222,9 +249,10 @@ class VisitorError:
                 for op in b.ops:
                     self.traverse(op)
 
-    def traverse_typed_var(self, operation: TypedVar):
-        if not isinstance(operation.type.op, ListType):
-            self.dictionaries.update({operation.var_name.data: (operation, Status.INIT_NOT_USED)})
+    def traverse_var_def(self, operation: VarDef):
+        typed_var = operation.typed_var.op
+        if not isinstance(typed_var.type.op, ListType):
+            self.dictionaries.update({typed_var.var_name.data: (operation, Status.INIT_NOT_USED)})
         for r in operation.regions:
             for b in r.blocks:
                 for op in b.ops:
