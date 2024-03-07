@@ -77,8 +77,6 @@ class VisitorError:
         for param in params:
             params_dictionary.update({param.var_name.data: Status.PARAM_NOT_USED})
 
-
-
         for r in operation.regions:
             for b in r.blocks:
                 for op in b.ops:
@@ -100,7 +98,6 @@ class VisitorError:
                     else:
                         params_dictionary = self.traverse_func_def_helper(op, params_dictionary)
 
-
         params = params_dictionary.keys()
 
         for key in params:
@@ -121,49 +118,7 @@ class VisitorError:
 
     def traverse_if(self, operation):
         cond = operation.cond.op
-        if isinstance(cond, Literal):
-            if not cond.value.data:
-                print("[Warning] Dead code found: Program contains unreachable statements.")
-                exit(0)
-            else:
-                if operation.orelse.block.first_op:
-                    print("[Warning] Dead code found: Program contains unreachable statements.")
-                    exit(0)
-        elif isinstance(cond, ExprName):
-            id = cond.id.data
-            status = self.dictionaries.get(id)
-            variable_assign_or_init_op = status[0]
-            if isinstance(variable_assign_or_init_op, VarDef):
-                value = variable_assign_or_init_op.literal.op.value.data
-                if not value:
-                    print("[Warning] Dead code found: Program contains unreachable statements.")
-                    exit(0)
-                else:
-                    if operation.orelse.block.first_op:
-                        print("[Warning] Dead code found: Program contains unreachable statements.")
-                        exit(0)
-            elif isinstance(variable_assign_or_init_op, Assign):
-                value = variable_assign_or_init_op.value.op.value.data
-                if not value:
-                    print("[Warning] Dead code found: Program contains unreachable statements.")
-                    exit(0)
-                else:
-                    if operation.orelse.block.first_op:
-                        print("[Warning] Dead code found: Program contains unreachable statements.")
-                        exit(0)
-        elif isinstance(cond, BinaryExpr):
-            lhs_val = self.get_expr_or_literal_value(cond.lhs.op)
-            rhs_val = self.get_expr_or_literal_value(cond.rhs.op)
-            expr = str(lhs_val) + cond.op.data + str(rhs_val)
-            if not eval(expr):
-                print("[Warning] Dead code found: Program contains unreachable statements.")
-                exit(0)
-            else:
-                if operation.orelse.block.first_op:
-                    print("[Warning] Dead code found: Program contains unreachable statements.")
-                    exit(0)
-        elif isinstance(cond, UnaryExpr):
-            exit(0)
+        self.check_condition(cond, operation)
 
         orelse = operation.orelse.ops
         if operation.orelse.block.first_op:
@@ -189,9 +144,7 @@ class VisitorError:
 
     def traverse_if_expr(self, operation):
         cond = operation.cond.op
-        if isinstance(cond, Literal):
-            print("[Warning] Dead code found: Program contains unreachable expressions.")
-            exit(0)
+        self.check_condition(cond, operation)
 
         orelse = operation.orelse.ops
         if operation.orelse.block.first_op:
@@ -217,9 +170,7 @@ class VisitorError:
 
     def traverse_while(self, operation):
         cond = operation.cond.op
-        if isinstance(cond, Literal):
-            print("[Warning] Dead code found: Program contains unreachable statements.")
-            exit(0)
+        self.check_condition(cond, operation)
 
         body = operation.body.ops
         if operation.orelse.block.first_op:
@@ -240,13 +191,13 @@ class VisitorError:
         if binary_op == "or":
             lhs = operation.lhs.op
             if isinstance(lhs, Literal):
-                if lhs.value.data:
+                if self.get_literal_value(lhs):
                     print("[Warning] Dead code found: Program contains unreachable expressions.")
                     exit(0)
         elif binary_op == "and":
             lhs = operation.lhs.op
             if isinstance(lhs, Literal):
-                if not lhs.value.data:
+                if not self.get_literal_value(lhs):
                     print("[Warning] Dead code found: Program contains unreachable expressions.")
                     exit(0)
 
@@ -263,6 +214,7 @@ class VisitorError:
             for b in r.blocks:
                 for op in b.ops:
                     self.traverse(op)
+
     # def traverse_typed_var(self, operation: TypedVar):
     #     if not isinstance(operation.type.op, ListType):
     #         self.dictionaries.update({operation.var_name.data: (operation, Status.INIT_NOT_USED)})
@@ -312,18 +264,114 @@ class VisitorError:
             status = self.dictionaries.get(id)
             variable_assign_or_init_op = status[0]
             if isinstance(variable_assign_or_init_op, VarDef):
-                literal = variable_assign_or_init_op.literal.op
-                value = literal.value.value.data
+                value = self.get_literal_value(variable_assign_or_init_op.literal.op)
                 return value
             elif isinstance(variable_assign_or_init_op, Assign):
-                value = variable_assign_or_init_op.value.op.value.data
+                if isinstance(variable_assign_or_init_op.value.op, Literal):
+                    value = self.get_literal_value(variable_assign_or_init_op.value.op)
+                elif isinstance(variable_assign_or_init_op.value.op, UnaryExpr):
+                    value = self.get_unary_value(variable_assign_or_init_op.value.op)
+
                 return value
         elif isinstance(operation, Literal):
-            return operation.value.value.data
+            return self.get_literal_value(operation)
+
+    def get_literal_value(self, operation: Literal):
+        value = operation.value
+        if isinstance(value, BoolAttr):
+            return value.data
+        elif isinstance(value, IntegerAttr):
+            return value.value.data
+        elif isinstance(value, StringAttr):
+            return value.data == ""
+
+    def get_unary_value(self, operation: UnaryExpr):
+        op = operation.op.data
+        expr = operation.value.op
+        if isinstance(expr, ExprName):
+            id = expr.id.data
+            status = self.dictionaries.get(id)
+            variable_assign_or_init_op = status[0]
+            if isinstance(variable_assign_or_init_op, VarDef):
+                value = self.get_literal_value(variable_assign_or_init_op.literal.op)
+                res = eval(op + " " + str(value))
+            elif isinstance(variable_assign_or_init_op, Assign):
+                value = variable_assign_or_init_op.value.op.value.data
+                res = eval(op + " " + str(value))
+            return res
+        elif isinstance(expr, Literal):
+            if op == "-":
+                value = self.get_literal_value(expr)
+                res = eval(op + str(value))
+            elif op == "not":
+                value = self.get_literal_value(expr)
+                res = eval(op + " " + str(value))
+            return res
 
 
     def get_dictionaries(self):
         return self.dictionaries
+
+    def check_condition(self, cond, operation):
+        if isinstance(cond, Literal):
+            if not self.get_literal_value(cond):
+                print("[Warning] Dead code found: Program contains unreachable statements.")
+                exit(0)
+            else:
+                if operation.orelse.block.first_op:
+                    print("[Warning] Dead code found: Program contains unreachable statements.")
+                    exit(0)
+        elif isinstance(cond, ExprName):
+            id = cond.id.data
+            status = self.dictionaries.get(id)
+            variable_assign_or_init_op = status[0]
+            if isinstance(variable_assign_or_init_op, VarDef):
+                value = self.get_literal_value(variable_assign_or_init_op.literal.op)
+                if not value:
+                    print("[Warning] Dead code found: Program contains unreachable statements.")
+                    exit(0)
+                else:
+                    if operation.orelse.block.first_op:
+                        print("[Warning] Dead code found: Program contains unreachable statements.")
+                        exit(0)
+            elif isinstance(variable_assign_or_init_op, Assign):
+                value = variable_assign_or_init_op.value.op.value.data
+                if not value:
+                    print("[Warning] Dead code found: Program contains unreachable statements.")
+                    exit(0)
+                else:
+                    if operation.orelse.block.first_op:
+                        print("[Warning] Dead code found: Program contains unreachable statements.")
+                        exit(0)
+        elif isinstance(cond, BinaryExpr):
+            lhs = cond.lhs.op
+            rhs = cond.rhs.op
+            if isinstance(lhs, Literal) or isinstance(lhs, ExprName):
+                lhs_val = self.get_expr_or_literal_value(lhs)
+            elif isinstance(lhs, UnaryExpr):
+                lhs_val = self.get_unary_value(lhs)
+
+            if isinstance(rhs, Literal) or isinstance(rhs, ExprName):
+                rhs_val = self.get_expr_or_literal_value(rhs)
+            elif isinstance(rhs, UnaryExpr):
+                rhs_val = self.get_unary_value(rhs)
+            expr = str(lhs_val) + " " + cond.op.data + " " + str(rhs_val)
+            if not eval(expr):
+                print("[Warning] Dead code found: Program contains unreachable statements.")
+                exit(0)
+            else:
+                if operation.orelse.block.first_op:
+                    print("[Warning] Dead code found: Program contains unreachable statements.")
+                    exit(0)
+        elif isinstance(cond, UnaryExpr):
+            value = self.get_literal_value(cond.value.op)
+            if not value:
+                print("[Warning] Dead code found: Program contains unreachable statements.")
+                exit(0)
+            else:
+                if operation.orelse.block.first_op:
+                    print("[Warning] Dead code found: Program contains unreachable statements.")
+                    exit(0)
 
 
 class Status(Enum):

@@ -393,6 +393,14 @@ def check_expr(o: LocalEnvironment, r: Type, op: Operation) -> Type:
                     t = int_compare_rule(o, r, lhs, rhs)
                 elif type(lhs.properties.get('value')) == choco_ast.StringAttr:
                     t = str_compare_rule(o, r, lhs, rhs)
+                elif isinstance(lhs, choco_ast.ExprName):
+                    types = o[lhs.id.data]
+                    if types == int_type:
+                        t = int_compare_rule(o, r, lhs, rhs)
+                    elif types == bool_type:
+                        t = bool_compare_rule(o, r, lhs, rhs)
+                    elif types == str_type:
+                        t = str_compare_rule(o, r, lhs, rhs)
             else:
                 t = int_compare_rule(o, r, lhs, rhs)
         elif binary_op in ["+", "-", "*", "//", "%"]:
