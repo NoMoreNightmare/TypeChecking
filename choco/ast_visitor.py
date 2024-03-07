@@ -249,14 +249,14 @@ class VisitorError:
                 for op in b.ops:
                     self.traverse(op)
 
-    # def traverse_var_def(self, operation: VarDef):
-    #     typed_var = operation.typed_var.op
-    #     if not isinstance(typed_var.type.op, ListType):
-    #         self.dictionaries.update({"var_def:"+typed_var.var_name.data: (operation, Status.INIT_NOT_USED)})
-    #     for r in operation.regions:
-    #         for b in r.blocks:
-    #             for op in b.ops:
-    #                 self.traverse(op)
+    def traverse_var_def(self, operation: VarDef):
+        typed_var = operation.typed_var.op
+        if not isinstance(typed_var.type.op, ListType):
+            self.dictionaries.update({"var_def:"+typed_var.var_name.data: (operation, Status.INIT_NOT_USED)})
+        for r in operation.regions:
+            for b in r.blocks:
+                for op in b.ops:
+                    self.traverse(op)
 
     def traverse_typed_var(self, operation: TypedVar):
         if not isinstance(operation.type.op, ListType):
