@@ -51,7 +51,6 @@ class VisitorError:
 
         traverse = get_method(self, f"traverse_{class_name}")
 
-
         if traverse:
             traverse(operation)
         else:
@@ -100,7 +99,6 @@ class VisitorError:
                         exit(0)
                     else:
                         params_dictionary = self.traverse_func_def_helper(op, params_dictionary)
-                    self.traverse(op)
 
 
         params = params_dictionary.keys()
@@ -257,7 +255,6 @@ class VisitorError:
             for b in r.blocks:
                 for op in b.ops:
                     self.traverse(op)
-
     # def traverse_typed_var(self, operation: TypedVar):
     #     if not isinstance(operation.type.op, ListType):
     #         self.dictionaries.update({operation.var_name.data: (operation, Status.INIT_NOT_USED)})
