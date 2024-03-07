@@ -231,7 +231,7 @@ class VisitorError:
         if isinstance(target, ExprName):
             name = target.id.data
             status = self.dictionaries.get(name)
-            if status[1] == Status.ASSIGN_NOT_USED or status[1] == Status.INIT_NOT_USED:
+            if status[1] == Status.ASSIGN_NOT_USED:
                 print("[Warning] Dead code found: The following store operation is unused:")
                 print(status[0])
                 exit(0)
@@ -240,7 +240,7 @@ class VisitorError:
         elif isinstance(target, IndexExpr):
             name = target.value.op.id.data
             status = self.dictionaries.get(name)
-            if status[1] == Status.ASSIGN_NOT_USED or status[1] == Status.INIT_NOT_USED:
+            if status[1] == Status.ASSIGN_NOT_USED:
                 print("[Warning] Dead code found: The following store operation is unused:")
                 print(status[0])
                 exit(0)
