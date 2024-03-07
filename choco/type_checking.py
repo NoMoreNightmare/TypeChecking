@@ -393,15 +393,15 @@ def check_expr(o: LocalEnvironment, r: Type, op: Operation) -> Type:
                     t = int_compare_rule(o, r, lhs, rhs)
                 elif isinstance(lhs, choco_ast.StringAttr):
                     t = str_compare_rule(o, r, lhs, rhs)
-                elif isinstance(lhs, choco_ast.ExprName):
-                    variable_name = lhs.id.data
-                    value = o[variable_name]
-                    if value == int_type:
-                        t = int_compare_rule(o, r, lhs, rhs)
-                    elif value == bool_type:
-                        t = bool_compare_rule(o, r, lhs, rhs)
-                    elif value == str_type:
-                        t = str_compare_rule(o, r, lhs, rhs)
+                # elif isinstance(lhs, choco_ast.ExprName):
+                #     variable_name = lhs.id.data
+                #     value = o[variable_name]
+                #     if value == int_type:
+                #         t = int_compare_rule(o, r, lhs, rhs)
+                #     elif value == bool_type:
+                #         t = bool_compare_rule(o, r, lhs, rhs)
+                #     elif value == str_type:
+                #         t = str_compare_rule(o, r, lhs, rhs)
             else:
                 t = int_compare_rule(o, r, lhs, rhs)
         elif binary_op in ["+", "-", "*", "//", "%"]:
