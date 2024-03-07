@@ -58,7 +58,7 @@ class VisitorError:
                 for b in r.blocks:
                     for op in b.ops:
                         if isinstance(operation, Program):
-                            if isinstance(op, BinaryExpr) or isinstance(op, UnaryExpr) \
+                            if isinstance(op, UnaryExpr) \
                                     or isinstance(op, IndexExpr) or isinstance(op, ListExpr) or isinstance(op, Literal):
                                 print("[Warning] Dead code found: The following expression is unused:")
                                 print(op)
