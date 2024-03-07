@@ -152,8 +152,16 @@ class VisitorError:
                         print("[Warning] Dead code found: Program contains unreachable statements.")
                         exit(0)
         elif isinstance(cond, BinaryExpr):
-            print(cond.op.data)
-            exit(0)
+            lhs_val = self.get_expr_or_literal_value(cond.lhs.op)
+            rhs_val = self.get_expr_or_literal_value(cond.rhs.op)
+            expr = str(lhs_val) + cond.op.data + str(rhs_val)
+            if not eval(expr):
+                print("[Warning] Dead code found: Program contains unreachable statements.")
+                exit(0)
+            else:
+                if operation.orelse.block.first_op:
+                    print("[Warning] Dead code found: Program contains unreachable statements.")
+                    exit(0)
         elif isinstance(cond, UnaryExpr):
             exit(0)
 
@@ -297,6 +305,22 @@ class VisitorError:
             for b in r.blocks:
                 for op in b.ops:
                     self.traverse(op)
+
+    def get_expr_or_literal_value(self, operation):
+        if isinstance(operation, ExprName):
+            id = operation.id.data
+            status = self.dictionaries.get(id)
+            variable_assign_or_init_op = status[0]
+            if isinstance(variable_assign_or_init_op, VarDef):
+                literal = variable_assign_or_init_op.literal.op
+                value = literal.value.value.data
+                return value
+            elif isinstance(variable_assign_or_init_op, Assign):
+                value = variable_assign_or_init_op.value.op.value.data
+                return value
+        elif isinstance(operation, Literal):
+            return operation.value.value.data
+
 
     def get_dictionaries(self):
         return self.dictionaries
